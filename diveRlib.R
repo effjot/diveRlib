@@ -4,7 +4,7 @@
 
 read.mon <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
-  x <- read.table(filename, header = FALSE, skip = 53,
+  x <- read.table(filename, header = FALSE, skip = 53, # Attention, magic number!
                     comment.char = "E", # skip last line "END OF DATA FILE"
                     col.names = c("date", "time", "h", "temp"))
   x$t <- strptime(paste(x$date, x$time), format="%Y/%m/%d %H:%M:%S")
@@ -30,6 +30,10 @@ between <- function(i, range) {
 
 but.last <- function(x) {
     head(x, n = -1)
+}
+
+paste.path <- function(...) {
+  paste(..., sep = "/")
 }
 
 
