@@ -65,24 +65,24 @@ t.range <- function(from.to, format = "%d.%m.%Y %H:%M") {
     as.POSIXct(strptime(from.to, format = format))
 }
 
-make.t.range.year <- function(year) {
+t.range.year <- function(year) {
     t.range(paste("01.01.", c(year, year+1), " 00:00", sep=""))
 }
 
-make.t.range.quarter <- function(year, quarter) {
+t.range.quarter <- function(year, quarter) {
     from <- paste("01.", (quarter-1)*3 + 1, ".", year, " 00:00", sep="")
     to   <- paste("01.", (quarter*3 + 1) %% 12,  ".",
                   c(rep(year, 3), year+1)[quarter], " 00:00", sep="")
     t.range(c(from, to))
 }
 
-make.t.range.month <- function(year, month) {
+t.range.month <- function(year, month) {
     t.range(paste("01.", c(month, month%%12 + 1), ".",
                   c(year, c(rep(year, 11), year+1)[month]),
                   " 00:00", sep=""))
 }
 
-make.t.range.week.of.month <- function(year, month, week, last.week.full = TRUE) {
+t.range.week.of.month <- function(year, month, week, last.week.full = TRUE) {
   stopifnot(between(week, c(1, 5)))
   start.day <- (week - 1)*7 + 1
   if (between(week, c(1, 4))) {
