@@ -2,13 +2,21 @@
 
 ### Data I/O
 
-read.mon <- function(filename) {
+mon.skip.to.records <- 53  # Attention, magic number!
+                           # Line where the real data records start
+
+read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
-  x <- read.table(filename, header = FALSE, skip = 53, # Attention, magic number!
-                    comment.char = "E", # skip last line "END OF DATA FILE"
-                    col.names = c("date", "time", "h", "temp"))
-  x$t <- strptime(paste(x$date, x$time), format="%Y/%m/%d %H:%M:%S")
-  x[, c("t", "h", "temp")]
+  header <- readLines(filename, n = mon.skip.to.records)
+  data <- read.table(filename, header = FALSE, skip = mon.skip.to.records,
+                     comment.char = "E", # skip last line "END OF DATA FILE"
+                     col.names = c("date", "time", "h", "temp"))
+  data$t <- strptime(paste(data$date, data$time), format="%Y/%m/%d %H:%M:%S")
+  list(data = data[, c("t", "h", "temp")], unparsed.header = header)
+}
+
+read.mon <- function(filename) {
+  read.mon.complete(filename)$data
 }
 
 read.all.mon <- function(dir, basename) {
@@ -20,6 +28,7 @@ read.all.mon <- function(dir, basename) {
   setwd(WD)
   x
 }
+
 
 
 ### General
