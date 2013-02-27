@@ -37,7 +37,21 @@ paste.path <- function(...) {
 }
 
 
-### Time series
+### Time and time series
+
+as.Date.ymd <- function(year, month, day) {
+  as.Date(paste(year, month, day, sep = "-"))
+}
+
+first.day.of.next.month <- function(year, month) {
+  seq(as.Date.ymd(year, month, 1),
+      length.out = 2, by = "months")[2]
+}
+
+last.day.of.month <- function(year, month) {
+  first.day.of.next.month(year, month) - 1
+}
+
 
 splicein.NA <- function(df, t) {
 	splice <- data.frame(matrix(NA, nrow = length(t), ncol=ncol(df)))
@@ -66,6 +80,22 @@ make.t.range.month <- function(year, month) {
     t.range(paste("01.", c(month, month%%12 + 1), ".",
                   c(year, c(rep(year, 11), year+1)[month]),
                   " 00:00", sep=""))
+}
+
+make.t.range.week.of.month <- function(year, month, week, last.week.full = TRUE) {
+  stopifnot(between(week, c(1, 5)))
+  start.day <- (week - 1)*7 + 1
+  if (between(week, c(1, 4))) {
+    t.range(paste(c(start.day, start.day + 7), ".", month, ".", year,
+                  " 00:00", sep=""))
+  } else {
+    if (last.week.full) {
+      end.date <- as.Date.ymd(year, month, start.day) + 7
+    } else {
+      end.date <- first.day.of.next.month(year, month)
+    }
+    c(as.Date.ymd(year, month, start.day), end.date)
+  }
 }
 
 
