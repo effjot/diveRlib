@@ -63,3 +63,13 @@ make.t.range.month <- function(year, month) {
                   c(year, c(rep(year, 11), year+1)[month]),
                   " 00:00", sep=""))
 }
+
+
+shift.time <- function(df, offset.seconds, t.col = "t") {
+  df[[t.col]] <- df[[t.col]] + offset.seconds
+  df
+}
+
+daylightsaving.to.standard.time <- function(df, t.col = "t") {
+  shift.time(df, -3600, t.col)
+}
