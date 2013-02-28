@@ -39,24 +39,41 @@ read.all.mon <- function(dir, basename) {
 parse.header <- function(unparsed.header) {
   unparsed <- unparsed.header[unparsed.header != ""] # strip empty lines
 
-  ## find lines with section names ("[section]")and extract them
-  df <- data.frame(is.sec.name = grepl("^[ \t]*\\[.+\\]", unparsed))
+  ## separate file info "banner" from INI-style part with logger info
+  separation <- grep("===[[:space:]]*BEGINNING OF DATA", unparsed)
+  file.info.unparsed <- unparsed[3:(separation-1)] # first two lines are decoration
+  ini <- unparsed[(separation+1):length(unparsed)]
 
-  df[df$is.sec.name, "section"] <- sub("^[[:space:]]*\\[(.+)\\]", "\\1",
-                                   unparsed[df$is.sec.name])
+  ## file info part: split at colon
+  file.info <- data.frame(key = sub("^[[:space:]]*([^:]+):.+", "\\1",
+                            file.info.unparsed), stringsAsFactors = FALSE)
+  file.info$val <- sub("^[[:space:]]*[^:]+:(.+)", "\\1", file.info.unparsed)
+
+
+  ## logger info part: find lines with INI-style section headings ("[section]")
+  ## and extract names
+  li <- data.frame(is.sec.name = grepl("^[ \t]*\\[.+\\]", ini))
+
+  li[li$is.sec.name, "section"] <- sub("^[[:space:]]*\\[(.+)\\]", "\\1",
+                                   ini[li$is.sec.name])
 
   ## then, the other lines are key=val pairs
-  df[!df$is.sec.name, "key"] <- sub("^[[:space:]]*([^=]+)=.+", "\\1",
-                                    unparsed[!df$is.sec.name])
-  df[!df$is.sec.name, "val"] <- sub("^[[:space:]]*[^=]+=(.+)", "\\1",
-                                    unparsed[!df$is.sec.name])
+  li[!li$is.sec.name, "key"] <- sub("^[[:space:]]*([^=]+)=.+", "\\1",
+                                    ini[!li$is.sec.name])
+  li[!li$is.sec.name, "val"] <- sub("^[[:space:]]*[^=]+=(.+)", "\\1",
+                                    ini[!li$is.sec.name])
 
   ## assign corresponding section names to rows containing key/value pairs
   ## (based on a solution by Earl F. Glynn,
   ##  https://stat.ethz.ch/pipermail/r-help/2007-June/134110.html)
-  df$section <- df$section[which(df$is.sec.name)[cumsum(df$is.sec.name)]]
+  li$section <- li$section[which(li$is.sec.name)[cumsum(li$is.sec.name)]]
 
-  df
+
+  ## combine both parts
+  data.frame(section = c(rep("FILEINFO", nrow(file.info)), li$section),
+             key = c(file.info$key, li$key),
+             val = c(file.info$val, li$val),
+             stringsAsFactors = FALSE)
 }
 
 
