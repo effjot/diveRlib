@@ -41,7 +41,8 @@ write.mon.complete <- function(filename, mon) {
   df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
-  writeLines(mon$unparsed.header, con, sep = mon.line.sep)
+  writeLines(but.last(mon$unparsed.header), con, sep = mon.line.sep)
+  cat(nrow(df), mon.line.sep, file = con, sep = "")
   write.table(df[c("timestamp", "h", "temp")], file = con, eol = mon.line.sep,
                quote = FALSE, row.names = FALSE, col.names = FALSE)
   close(con)
