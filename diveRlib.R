@@ -36,6 +36,28 @@ read.all.mon <- function(dir, basename) {
 }
 
 
+parse.header <- function(unparsed.header) {
+  ## find lines with section names ("[section]")and extract them
+  df <- data.frame(is.sec.name = grepl("^[ \t]*\\[.+\\]", unparsed))
+
+  df[df$is.sec.name, "section"] <- sub("^[[:space:]]*\\[(.+)\\]", "\\1",
+                                   unparsed[df$is.sec.name])
+
+  ## then, the other lines are key=val pairs
+  df[!df$is.sec.name, "key"] <- sub("^[[:space:]]*([^=]+)=.+", "\\1",
+                                    unparsed[!df$is.sec.name])
+  df[!df$is.sec.name, "val"] <- sub("^[[:space:]]*[^=]+=(.+)", "\\1",
+                                    unparsed[!df$is.sec.name])
+
+  ## assign corresponding section names to rows containing key/value pairs
+  ## (based on a solution by Earl F. Glynn,
+  ##  https://stat.ethz.ch/pipermail/r-help/2007-June/134110.html)
+  df$section <- df$section[which(df$is.sec.name)[cumsum(df$is.sec.name)]]
+
+  df
+}
+
+
 write.mon.complete <- function(filename, mon) {
   df <- mon$data[c("h", "temp")]
   df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
@@ -135,4 +157,3 @@ shift.time <- function(df, offset.seconds, t.col = "t") {
 daylightsaving.to.standard.time <- function(df, t.col = "t") {
   shift.time(df, -3600, t.col)
 }
-  
