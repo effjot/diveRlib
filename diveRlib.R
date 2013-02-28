@@ -37,6 +37,8 @@ read.all.mon <- function(dir, basename) {
 
 
 parse.header <- function(unparsed.header) {
+  unparsed <- unparsed.header[unparsed.header != ""] # strip empty lines
+
   ## find lines with section names ("[section]")and extract them
   df <- data.frame(is.sec.name = grepl("^[ \t]*\\[.+\\]", unparsed))
 
