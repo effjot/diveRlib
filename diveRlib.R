@@ -5,6 +5,11 @@
 mon.skip.to.records <- 53  # Attention, magic number!
                            # Line where the real data records start
 
+mon.datetime.format <- "%Y/%m/%d %H:%M:%S"
+
+mon.line.sep <- "\r\n"
+
+
 read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
   header <- readLines(filename, n = mon.skip.to.records)
@@ -23,10 +28,23 @@ read.all.mon <- function(dir, basename) {
   WD <- setwd(dir)
   x <- do.call(rbind,
                lapply(sort(list.files(".",
-                                      pattern = paste("^", basename, ".+\\.(MON|mon)$", sep=""))),
+                                      pattern = paste("^", basename,
+                                        ".+\\.(MON|mon)$", sep=""))),
                       FUN = read.mon))
   setwd(WD)
   x
+}
+
+
+write.mon.complete <- function(filename, mon) {
+  df <- mon$data[c("h", "temp")]
+  df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
+
+  con <- file(filename, "wb")           # write binary to ensure CRLF newlines
+  writeLines(mon$unparsed.header, con, sep = mon.line.sep)
+  write.table(df[c("timestamp", "h", "temp")], file = con, eol = mon.line.sep,
+               quote = FALSE, row.names = FALSE, col.names = FALSE)
+  close(con)
 }
 
 
@@ -116,3 +134,4 @@ shift.time <- function(df, offset.seconds, t.col = "t") {
 daylightsaving.to.standard.time <- function(df, t.col = "t") {
   shift.time(df, -3600, t.col)
 }
+  
