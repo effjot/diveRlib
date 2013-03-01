@@ -86,6 +86,33 @@ parse.header <- function(unparsed.header) {
 }
 
 
+format.header <- function(header, created.by.diveRlib = TRUE) {
+  con <- file("", "w+b")                # build strings in temp file
+
+  ## helper function: print with proper newline
+  nl <- function(string) { cat(string, mon.line.sep, sep = "", file = con) }
+
+  ## helper fucntion: convert key/value list to dataframe
+  lst.to.df <- function(sec, pad.key) {
+    data.frame(key = names(sec), val = unlist(sec),
+               stringsAsFactors = FALSE, row.names = NULL)
+  }
+
+
+  ## write heading
+  nl("Data file for DataLogger.")
+  nl(paste0(rep("=", 78), collapse = ""))
+
+  ## file info part, colon-separated
+  df <- lst.to.df(header$FILEINFO)
+  df$key <- pad(df$key, 11)
+  write.table(df, sep = ":", col.names = FALSE, row.names = FALSE,
+              file = con, eol = mon.line.sep, quote = FALSE)
+
+  readLines(con)                        # return stored strings from file
+}
+
+
 write.mon.complete <- function(filename, mon) {
   df <- mon$data[c("h", "temp")]
   df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
