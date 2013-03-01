@@ -40,7 +40,7 @@ parse.header <- function(unparsed.header) {
   unparsed <- unparsed.header[unparsed.header != ""] # strip empty lines
 
   ## separate file info "banner" from INI-style part with logger info
-  separation <- grep("===[[:space:]]*BEGINNING OF DATA", unparsed)
+  separation <- grep("===[[:blank:]]*BEGINNING OF DATA", unparsed)
   file.info.unparsed <- unparsed[3:(separation-1)] # first two lines are decoration
   ini <- unparsed[(separation+1):length(unparsed)]
 
@@ -52,15 +52,15 @@ parse.header <- function(unparsed.header) {
 
   ## logger info part: find lines with INI-style section headings ("[section]")
   ## and extract names
-  li <- data.frame(is.sec.name = grepl("^[ \t]*\\[.+\\]", ini))
+  li <- data.frame(is.sec.name = grepl("^[[:blank:]]*\\[.+\\]", ini))
 
-  li[li$is.sec.name, "section"] <- sub("^[[:space:]]*\\[(.+)\\]", "\\1",
+  li[li$is.sec.name, "section"] <- sub("^[[:blank:]]*\\[(.+)\\]", "\\1",
                                    ini[li$is.sec.name])
 
   ## then, the other lines are key=val pairs
-  li[!li$is.sec.name, "key"] <- sub("^[[:space:]]*([^=]+)=.+", "\\1",
+  li[!li$is.sec.name, "key"] <- sub("^[[:blank:]]*([^=]+)=.+", "\\1",
                                     ini[!li$is.sec.name])
-  li[!li$is.sec.name, "val"] <- sub("^[[:space:]]*[^=]+=(.+)", "\\1",
+  li[!li$is.sec.name, "val"] <- sub("^[[:blank:]]*[^=]+=(.+)", "\\1",
                                     ini[!li$is.sec.name])
 
   ## assign corresponding section names to rows containing key/value pairs
@@ -69,11 +69,20 @@ parse.header <- function(unparsed.header) {
   li$section <- li$section[which(li$is.sec.name)[cumsum(li$is.sec.name)]]
 
 
-  ## combine both parts
-  data.frame(section = c(rep("FILEINFO", nrow(file.info)), li$section),
-             key = c(file.info$key, li$key),
-             val = c(file.info$val, li$val),
-             stringsAsFactors = FALSE)
+  ## combine both parts, trim whitespace from keys and values (section is alread
+  df <- data.frame(section = c(rep("FILEINFO", nrow(file.info)),
+                     trim(li$section)),
+                   key = trim(c(file.info$key, li$key)),
+                   val = trim(c(file.info$val, li$val)),
+                   stringsAsFactors = FALSE)
+
+  ## transform to nested list (header$section$key)
+  sapply(split(df, df$section),
+         FUN = function(sec) {
+           val        <- as.list(sec[-1, "val"])
+           names(val) <- sec[-1, "key"]
+           val
+         })
 }
 
 
@@ -104,6 +113,12 @@ but.last <- function(x) {
 paste.path <- function(...) {
   paste(..., sep = "/")
 }
+
+# remove leading or trailing whitespace from string
+trim <- function(string) {
+  gsub("^[[:space:]]+|[[:space:]]+$", "", string)
+}
+
 
 
 ### Time and time series
