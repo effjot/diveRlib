@@ -114,9 +114,28 @@ paste.path <- function(...) {
   paste(..., sep = "/")
 }
 
-# remove leading or trailing whitespace from string
+## remove leading or trailing whitespace from string
 trim <- function(string) {
   gsub("^[[:space:]]+|[[:space:]]+$", "", string)
+}
+
+## duplicate strings, works with times as a vector
+## taken from stringr package
+str.dup <- function(string, times) {
+  # Use dataframe to do recycling
+  data <- data.frame(string, times)
+  n <- nrow(data)
+  string <- data$string
+  times <- data$times
+
+  vapply(seq_len(n), function(i) {
+    paste(rep.int(string[i], times[i]), collapse = "")
+  }, character(1))
+}
+
+## pad string to desired length with spaces to the right
+pad <- function(string, len) {
+  paste0(string, str.dup(" ", len - nchar(string)))
 }
 
 
