@@ -43,6 +43,83 @@ read.all.mon <- function(dir, basename) {
 }
 
 
+parse.header <- function(unparsed.header) {
+  unparsed <- unparsed.header[unparsed.header != ""] # strip empty lines
+
+  ## separate file info "banner" from INI-style part with logger info
+  separation <- grep("===[[:blank:]]*BEGINNING OF DATA", unparsed)
+  file.info.unparsed <- unparsed[3:(separation-1)] # first two lines are decoration
+  ini <- unparsed[(separation+1):length(unparsed)]
+
+  ## file info part: split at colon
+  file.info <- data.frame(key = sub("^[[:space:]]*([^:]+):.+", "\\1",
+                            file.info.unparsed), stringsAsFactors = FALSE)
+  file.info$val <- sub("^[[:space:]]*[^:]+:(.+)", "\\1", file.info.unparsed)
+
+
+  ## logger info part: find lines with INI-style section headings ("[section]")
+  ## and extract names
+  li <- data.frame(is.sec.name = grepl("^[[:blank:]]*\\[.+\\]", ini))
+
+  li[li$is.sec.name, "section"] <- sub("^[[:blank:]]*\\[(.+)\\]", "\\1",
+                                   ini[li$is.sec.name])
+
+  ## then, the other lines are key=val pairs
+  li[!li$is.sec.name, "key"] <- sub("^[[:blank:]]*([^=]+)=.+", "\\1",
+                                    ini[!li$is.sec.name])
+  li[!li$is.sec.name, "val"] <- sub("^[[:blank:]]*[^=]+=(.+)", "\\1",
+                                    ini[!li$is.sec.name])
+
+  ## assign corresponding section names to rows containing key/value pairs
+  ## (based on a solution by Earl F. Glynn,
+  ##  https://stat.ethz.ch/pipermail/r-help/2007-June/134110.html)
+  li$section <- li$section[which(li$is.sec.name)[cumsum(li$is.sec.name)]]
+
+
+  ## combine both parts, trim whitespace from keys and values (section is alread
+  df <- data.frame(section = c(rep("FILEINFO", nrow(file.info)),
+                     trim(li$section)),
+                   key = trim(c(file.info$key, li$key)),
+                   val = trim(c(file.info$val, li$val)),
+                   stringsAsFactors = FALSE)
+
+  ## transform to nested list (header$section$key)
+  sapply(split(df, df$section),
+         FUN = function(sec) {
+           val        <- as.list(sec[-1, "val"])
+           names(val) <- sec[-1, "key"]
+           val
+         })
+}
+
+
+format.header <- function(header, created.by.diveRlib = TRUE) {
+  con <- file("", "w+b")                # build strings in temp file
+
+  ## helper function: print with proper newline
+  nl <- function(string) { cat(string, mon.line.sep, sep = "", file = con) }
+
+  ## helper fucntion: convert key/value list to dataframe
+  lst.to.df <- function(sec, pad.key) {
+    data.frame(key = names(sec), val = unlist(sec),
+               stringsAsFactors = FALSE, row.names = NULL)
+  }
+
+
+  ## write heading
+  nl("Data file for DataLogger.")
+  nl(paste0(rep("=", 78), collapse = ""))
+
+  ## file info part, colon-separated
+  df <- lst.to.df(header$FILEINFO)
+  df$key <- pad(df$key, 11)
+  write.table(df, sep = ":", col.names = FALSE, row.names = FALSE,
+              file = con, eol = mon.line.sep, quote = FALSE)
+
+  readLines(con)                        # return stored strings from file
+}
+
+
 write.mon.complete <- function(filename, mon) {
   df <- mon$data[c("h", "temp")]
   df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
@@ -70,6 +147,31 @@ but.last <- function(x) {
 paste.path <- function(...) {
   paste(..., sep = "/")
 }
+
+## remove leading or trailing whitespace from string
+trim <- function(string) {
+  gsub("^[[:space:]]+|[[:space:]]+$", "", string)
+}
+
+## duplicate strings, works with times as a vector
+## taken from stringr package
+str.dup <- function(string, times) {
+  # Use dataframe to do recycling
+  data <- data.frame(string, times)
+  n <- nrow(data)
+  string <- data$string
+  times <- data$times
+
+  vapply(seq_len(n), function(i) {
+    paste(rep.int(string[i], times[i]), collapse = "")
+  }, character(1))
+}
+
+## pad string to desired length with spaces to the right
+pad <- function(string, len) {
+  paste0(string, str.dup(" ", len - nchar(string)))
+}
+
 
 
 ### Time and time series
@@ -142,4 +244,3 @@ shift.time <- function(df, offset.seconds, t.col = "t") {
 daylightsaving.to.standard.time <- function(df, t.col = "t") {
   shift.time(df, -3600, t.col)
 }
-  
