@@ -7,9 +7,11 @@ mon.skip.to.records <- 53  # Attention, magic number!
 
 mon.datetime.format <- "%Y/%m/%d %H:%M:%S"
 
-mon.line.sep <- "\r\n"
+mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
 
+## Read a single MON file, return a list with header as text lines and
+## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
   header <- readLines(filename, n = mon.skip.to.records)
@@ -20,14 +22,19 @@ read.mon.complete <- function(filename) {
   list(data = data[, c("t", "h", "temp")], unparsed.header = header)
 }
 
+
+## Read a single MON file, return only the dataframe
 read.mon <- function(filename) {
   read.mon.complete(filename)$data
 }
 
+
+## Read all MON files starting with basename in alphabetical order and
+## return as a single dataframe
 read.all.mon <- function(dir, basename) {
   WD <- setwd(dir)
-  x <- do.call(rbind,
-               lapply(sort(list.files(".",
+  x <- do.call(rbind,                      # combine into single dataframe
+               lapply(sort(list.files(".", # read files in order
                                       pattern = paste("^", basename,
                                         ".+\\.(MON|mon)$", sep=""))),
                       FUN = read.mon))
