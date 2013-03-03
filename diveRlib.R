@@ -31,7 +31,7 @@ read.mon <- function(filename) {
 
 ## Read all MON files starting with basename in alphabetical order and
 ## return as a single dataframe
-read.all.mon <- function(dir, basename) {
+read.mon.all <- function(dir, basename) {
   WD <- setwd(dir)
   x <- do.call(rbind,                      # combine into single dataframe
                lapply(sort(list.files(".", # read files in order
