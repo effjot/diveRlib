@@ -3,7 +3,7 @@ diveRlib
 
 A library for processing van Essen / Schlumberger Diver MON files.  Currently reads and writes logging data, but no processing of header (info about logger, location, etc.) yet.
 
-  `read.mon.complete(filename)`
+* `read.mon.complete(filename)`
 
   Reads MON file, returns a list with two elements: `$header` -- unparsed header as lines of text;
   `$data` -- dataframe with columns `t` (time), `h` (water level), `temp` (temperature).
