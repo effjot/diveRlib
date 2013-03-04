@@ -8,7 +8,7 @@ diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writi
 mon.skip.to.records <- 53  # Attention, magic number!
                            # Line where the real data records start
 
-mon.datetime.format <- "%Y/%m/%d %H:%M:%S"
+mon.datetime.format <- "%Y/%m/%d %H:%M:%OS"
 
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
@@ -145,7 +145,15 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
 
 write.mon.complete <- function(filename, mon) {
   df <- mon$data[c("h", "temp")]
-  df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
+
+  ## format time and numbers for output
+  op <- options(digits.secs = 1)
+  df$t.fmt <- strftime(mon$data$t, format = mon.datetime.format)
+  options(op)
+  df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
+                      width = 12, drop0trailing = FALSE)
+  df$temp.fmt <- formatC(mon$data$temp, format="f", digits = 2,
+                         width = 11, drop0trailing = FALSE)
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
 
@@ -156,7 +164,8 @@ write.mon.complete <- function(filename, mon) {
 
   nl(); nl()
   nl("[Data]"); nl(nrow(df))
-  write.table(df[c("timestamp", "h", "temp")], file = con, eol = mon.line.sep,
+  write.table(df[c("t.fmt", "h.fmt", "temp.fmt")], sep = " ",
+              file = con, eol = mon.line.sep,
                quote = FALSE, row.names = FALSE, col.names = FALSE)
 
   nl("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
