@@ -9,6 +9,8 @@ mon.datetime.format <- "%Y/%m/%d %H:%M:%S"
 
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
+mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series settings", "Channel 1 from data header", "Channel 2 from data header") # sections to write into new MON headers, in order
+
 
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
@@ -116,7 +118,19 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
   write.table(df, sep = ":", col.names = FALSE, row.names = FALSE,
               file = con, eol = mon.line.sep, quote = FALSE)
 
-  readLines(con)                        # return stored strings from file
+  ## logger info part, equal-sign-separated; write out predfined sections
+  lapply(mon.write.sections,
+         FUN = function(sec) {
+           print(paste0("format.header(), lapply FUN: sec = ", sec))
+           nl(paste0("[", sec, "]"))
+           df <- lst.to.df(header[[sec]])
+           df$key <- pad(df$key, 26)
+           write.table(df, sep = "=", col.names = FALSE, row.names = FALSE,
+              file = con, eol = mon.line.sep, quote = FALSE)
+         })
+
+  ## return stored strings from file
+  readLines(con)
 }
 
 
