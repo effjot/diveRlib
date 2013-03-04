@@ -138,6 +138,8 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
 
   ## return stored strings from file
   readLines(con)
+
+  close(con)
 }
 
 
