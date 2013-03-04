@@ -99,7 +99,7 @@ parse.header <- function(unparsed.header) {
 }
 
 
-format.header <- function(header, created.by.diveRlib = TRUE) {
+format.header <- function(header, created.by.diveRlib = FALSE) {
   if (created.by.diveRlib)
     header$FILEINFO$`CREATED BY` <- diveRlib.ID.string
 
@@ -124,7 +124,7 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
   write.table(df, sep = ": ", col.names = FALSE, row.names = FALSE,
               file = con, eol = mon.line.sep, quote = FALSE)
 
-  nl(c(str.dup("=", 26), "    BEGINNING OF DATA    ", str.dup("=", 26)))
+  nl(c(str.dup("=", 26), "    BEGINNING OF DATA     ", str.dup("=", 26)))
 
   ## logger info part, equal-sign-separated; write out predfined sections
   lapply(mon.write.sections,
@@ -137,9 +137,9 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
          })
 
   ## return stored strings from file
-  readLines(con)
-
+  unparsed.header <- readLines(con)
   close(con)
+  unparsed.header
 }
 
 
