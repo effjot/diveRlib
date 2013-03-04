@@ -1,5 +1,8 @@
 #### Library for processing van Essen / Schlumberger Diver MON files
 
+diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writing header data
+
+
 ### Data I/O
 
 mon.skip.to.records <- 53  # Attention, magic number!
@@ -96,6 +99,9 @@ parse.header <- function(unparsed.header) {
 
 
 format.header <- function(header, created.by.diveRlib = TRUE) {
+  if (created.by.diveRlib)
+    header$FILEINFO$`CREATED BY` <- diveRlib.ID.string
+
   con <- file("", "w+b")                # build strings in temp file
 
   ## helper function: print with proper newline
@@ -121,7 +127,6 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
   ## logger info part, equal-sign-separated; write out predfined sections
   lapply(mon.write.sections,
          FUN = function(sec) {
-           print(paste0("format.header(), lapply FUN: sec = ", sec))
            nl(paste0("[", sec, "]"))
            df <- lst.to.df(header[[sec]])
            df$key <- pad(df$key, 26)
