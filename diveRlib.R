@@ -82,10 +82,11 @@ parse.header <- function(unparsed.header) {
 
 
   ## combine both parts, trim whitespace from keys and values (section is alread
-  df <- data.frame(section = c(rep("FILEINFO", nrow(file.info)),
+  df <- data.frame(section = c(rep("FILEINFO", nrow(file.info) + 1),
+                                        # + 1 to generate empty row for section name
                      trim(li$section)),
-                   key = trim(c(file.info$key, li$key)),
-                   val = trim(c(file.info$val, li$val)),
+                   key = trim(c("", file.info$key, li$key)),
+                   val = trim(c("", file.info$val, li$val)),
                    stringsAsFactors = FALSE)
 
   ## transform to nested list (header$section$key)
