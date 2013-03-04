@@ -107,22 +107,23 @@ format.header <- function(header, created.by.diveRlib = TRUE) {
   ## helper function: print with proper newline
   nl <- function(string) { cat(string, mon.line.sep, sep = "", file = con) }
 
-  ## helper fucntion: convert key/value list to dataframe
+  ## helper function: convert key/value list to dataframe
   lst.to.df <- function(sec, pad.key) {
     data.frame(key = names(sec), val = unlist(sec),
                stringsAsFactors = FALSE, row.names = NULL)
   }
 
 
-  ## write heading
+  ## file info part with headings/"banner"; data colon-separated
   nl("Data file for DataLogger.")
-  nl(paste0(rep("=", 78), collapse = ""))
+  nl(str.dup("=", 78))
 
-  ## file info part, colon-separated
   df <- lst.to.df(header$FILEINFO)
   df$key <- pad(df$key, 11)
-  write.table(df, sep = ":", col.names = FALSE, row.names = FALSE,
+  write.table(df, sep = ": ", col.names = FALSE, row.names = FALSE,
               file = con, eol = mon.line.sep, quote = FALSE)
+
+  nl(c(str.dup("=", 26), "    BEGINNING OF DATA    ", str.dup("=", 26)))
 
   ## logger info part, equal-sign-separated; write out predfined sections
   lapply(mon.write.sections,
@@ -145,12 +146,17 @@ write.mon.complete <- function(filename, mon) {
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
 
+  ## helper function: print with proper newline
+  nl <- function(string = "") { cat(string, mon.line.sep, sep = "", file = con) }
+
   writeLines(mon$unparsed.header, con, sep = mon.line.sep)
 
-  cat(mon.line.sep, mon.line.sep, "[Data]", mon.line.sep,
-      nrow(df), mon.line.sep, file = con, sep = "")
+  nl(); nl()
+  nl("[Data]"); nl(nrow(df))
   write.table(df[c("timestamp", "h", "temp")], file = con, eol = mon.line.sep,
                quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+  nl("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
 
   close(con)
 }
