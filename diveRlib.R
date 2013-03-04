@@ -183,7 +183,7 @@ str.dup <- function(string, times) {
 
 ## pad string to desired length with spaces to the right
 pad <- function(string, len) {
-  paste0(string, str.dup(" ", len - nchar(string)))
+  paste0(string, str.dup(" ", max(0, len - nchar(string))))
 }
 
 
