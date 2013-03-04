@@ -19,7 +19,7 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
-  header <- readLines(filename, n = mon.skip.to.records)
+  header <- readLines(filename, n = mon.skip.to.records - 4) # omit [Data] heading
   data <- read.table(filename, header = FALSE, skip = mon.skip.to.records,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
@@ -144,10 +144,14 @@ write.mon.complete <- function(filename, mon) {
   df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
-  writeLines(but.last(mon$unparsed.header), con, sep = mon.line.sep)
-  cat(nrow(df), mon.line.sep, file = con, sep = "")
+
+  writeLines(mon$unparsed.header, con, sep = mon.line.sep)
+
+  cat(mon.line.sep, mon.line.sep, "[Data]", mon.line.sep,
+      nrow(df), mon.line.sep, file = con, sep = "")
   write.table(df[c("timestamp", "h", "temp")], file = con, eol = mon.line.sep,
                quote = FALSE, row.names = FALSE, col.names = FALSE)
+
   close(con)
 }
 
