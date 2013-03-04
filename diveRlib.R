@@ -8,7 +8,8 @@ diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writi
 mon.skip.to.records <- 53  # Attention, magic number!
                            # Line where the real data records start
 
-mon.datetime.format <- "%Y/%m/%d %H:%M:%OS"
+mon.header.datetime.format <- "%S:%M:%H %d/%m/%y"
+mon.data.datetime.format <- "%Y/%m/%d %H:%M:%OS"
 
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
@@ -23,7 +24,7 @@ read.mon.complete <- function(filename) {
   data <- read.table(filename, header = FALSE, skip = mon.skip.to.records,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
-  data$t <- strptime(paste(data$date, data$time), format="%Y/%m/%d %H:%M:%S")
+  data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format)
   list(data = data[, c("t", "h", "temp")], unparsed.header = header)
 }
 
@@ -148,7 +149,7 @@ write.mon.complete <- function(filename, mon) {
 
   ## format time and numbers for output
   op <- options(digits.secs = 1)
-  df$t.fmt <- strftime(mon$data$t, format = mon.datetime.format)
+  df$t.fmt <- strftime(mon$data$t, format = mon.data.datetime.format)
   options(op)
   df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
                       width = 12, drop0trailing = FALSE)
