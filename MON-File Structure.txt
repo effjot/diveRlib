@@ -1,0 +1,26 @@
+Questions and Investigations
+============================
+
+What is Instrument number?
+
+
+Import into Diver Office, logger not yet present in database
+=> [Logger settings] section:
+      ignored: Serial number, Location
+
+   [Series settings] section:
+      Serial number, Location taken from here
+
+
+Import into Diver Office with logger/location already in database, new Serial number in both sections
+=> new dataset with new Serial number from [Series settings], old dataset keeps Serial number
+
+   Diver Properties in Diver Office shows new Serial number (from [Series settings])
+
+
+Import into Diver Office with logger/location already in database, new Location only in [Series settings]
+=> Diver Office creates new location
+
+
+Import into Diver Office with logger/location already in database, new Location only in [Logger settings]
+=> Import into existing location as new dataset
