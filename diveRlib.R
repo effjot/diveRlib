@@ -105,6 +105,7 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
     header$FILEINFO$`CREATED BY` <- diveRlib.ID.string
 
   con <- file("", "w+b")                # build strings in temp file
+  on.exit(close(con))
 
   ## helper function: print with proper newline
   nl <- function(string) { cat(string, mon.line.sep, sep = "", file = con) }
@@ -138,9 +139,7 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
          })
 
   ## return stored strings from file
-  unparsed.header <- readLines(con)
-  close(con)
-  unparsed.header
+  readLines(con)
 }
 
 
@@ -149,14 +148,15 @@ write.mon.complete <- function(filename, mon) {
 
   ## format time and numbers for output
   op <- options(digits.secs = 1)
+  on.exit(options(op))
   df$t.fmt <- strftime(mon$data$t, format = mon.data.datetime.format)
-  options(op)
   df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
                       width = 12, drop0trailing = FALSE)
   df$temp.fmt <- formatC(mon$data$temp, format="f", digits = 2,
                          width = 11, drop0trailing = FALSE)
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
+  on.exit(close(con), add = TRUE)
 
   ## helper function: print with proper newline
   nl <- function(string = "") { cat(string, mon.line.sep, sep = "", file = con) }
@@ -170,8 +170,6 @@ write.mon.complete <- function(filename, mon) {
                quote = FALSE, row.names = FALSE, col.names = FALSE)
 
   nl("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
-
-  close(con)
 }
 
 
