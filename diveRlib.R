@@ -21,16 +21,23 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
 
+  ## read and parse header sections
   header <- readLines(filename, n = mon.max.header.lines)
   data.header.line <- grep("[Data]", header, fixed = TRUE)
   header <- header[1:(data.header.line - 1)]
+  hdr <- parse.header(header)
 
+  ## measurements compensated?
+  comp <- if (hdr$FILEINFO$COMP.STATUS == "Done") TRUE else FALSE
+
+  ## read data
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
   data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format)
-  
-  list(data = data[, c("t", "h", "temp")], unparsed.header = header)
+
+  list(data = data[, c("t", "h", "temp")], hdr = hdr, comp = comp,
+       unparsed.header = header)
 }
 
 
