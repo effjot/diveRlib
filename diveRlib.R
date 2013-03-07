@@ -5,8 +5,8 @@ diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writi
 
 ### Data I/O
 
-mon.skip.to.records <- 53  # Attention, magic number!
-                           # Line where the real data records start
+mon.max.header.lines <- 70 # Maximum number of lines read for finding
+                           # end of header / beginning of data
 
 mon.header.datetime.format <- "%S:%M:%H %d/%m/%y"
 mon.data.datetime.format <- "%Y/%m/%d %H:%M:%OS"
@@ -20,11 +20,16 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
-  header <- readLines(filename, n = mon.skip.to.records - 4) # omit [Data] heading
-  data <- read.table(filename, header = FALSE, skip = mon.skip.to.records,
+
+  header <- readLines(filename, n = mon.max.header.lines)
+  data.header.line <- grep("[Data]", header, fixed = TRUE)
+  header <- header[1:(data.header.line - 1)]
+
+  data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
   data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format)
+  
   list(data = data[, c("t", "h", "temp")], unparsed.header = header)
 }
 
