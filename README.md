@@ -5,8 +5,11 @@ A library for processing van Essen / Schlumberger Diver MON files.  Currently re
 
 * `read.mon.complete(filename)`
 
-  Reads MON file, returns a list with two elements: `$header` -- unparsed header as lines of text;
-  `$data` -- dataframe with columns `t` (time), `h` (water level), `temp` (temperature).
+  Reads MON file, returns a list with these elements:
+  - `$data` -- dataframe with columns `t` (time), `h` (water level), `temp` (temperature).
+  - `$hdr` -- header as a nested list (`$hdr$section$key`)
+  - `$comp` -- logical: barometric compensation already done?
+  - `$unparsed.header` -- original, unparsed header as lines of text
 
 * `read.mon(filname)`
 
@@ -21,7 +24,9 @@ A library for processing van Essen / Schlumberger Diver MON files.  Currently re
 
 * `write.mon.complete(filename, mon)`
 
-  Takes a list with (unparsed) `$header` and `$data` and writes it to a MON file.
+  Takes MON data as a list (as returned by `mon.read.complete()`),
+  writes `$unparsed.header` and `$data` to a MON file.  If you changed
+  `$hdr`, use `format.header()` to get a updated `$unparsed.header`.
 
 
 
