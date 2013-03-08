@@ -1,25 +1,43 @@
 #### Library for processing van Essen / Schlumberger Diver MON files
 
+diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writing header data
+
+
 ### Data I/O
 
-mon.skip.to.records <- 53  # Attention, magic number!
-                           # Line where the real data records start
+mon.max.header.lines <- 70 # Maximum number of lines read for finding
+                           # end of header / beginning of data
 
-mon.datetime.format <- "%Y/%m/%d %H:%M:%S"
+mon.header.datetime.format <- "%S:%M:%H %d/%m/%y"
+mon.data.datetime.format <- "%Y/%m/%d %H:%M:%OS"
 
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
+
+mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series settings", "Channel 1 from data header", "Channel 2 from data header") # sections to write into new MON headers, in order
 
 
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename) {
   cat("Reading ", filename, ".\n", sep = "")
-  header <- readLines(filename, n = mon.skip.to.records)
-  data <- read.table(filename, header = FALSE, skip = mon.skip.to.records,
+
+  ## read and parse header sections
+  header <- readLines(filename, n = mon.max.header.lines)
+  data.header.line <- grep("[Data]", header, fixed = TRUE)
+  header <- header[1:(data.header.line - 1)]
+  hdr <- parse.header(header)
+
+  ## measurements compensated?
+  comp <- if (hdr$FILEINFO$COMP.STATUS == "Done") TRUE else FALSE
+
+  ## read data
+  data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
-  data$t <- strptime(paste(data$date, data$time), format="%Y/%m/%d %H:%M:%S")
-  list(data = data[, c("t", "h", "temp")], unparsed.header = header)
+  data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format)
+
+  list(data = data[, c("t", "h", "temp")], hdr = hdr, comp = comp,
+       unparsed.header = header)
 }
 
 
@@ -77,10 +95,11 @@ parse.header <- function(unparsed.header) {
 
 
   ## combine both parts, trim whitespace from keys and values (section is alread
-  df <- data.frame(section = c(rep("FILEINFO", nrow(file.info)),
+  df <- data.frame(section = c(rep("FILEINFO", nrow(file.info) + 1),
+                                        # + 1 to generate empty row for section name
                      trim(li$section)),
-                   key = trim(c(file.info$key, li$key)),
-                   val = trim(c(file.info$val, li$val)),
+                   key = trim(c("", file.info$key, li$key)),
+                   val = trim(c("", file.info$val, li$val)),
                    stringsAsFactors = FALSE)
 
   ## transform to nested list (header$section$key)
@@ -93,43 +112,76 @@ parse.header <- function(unparsed.header) {
 }
 
 
-format.header <- function(header, created.by.diveRlib = TRUE) {
+format.header <- function(header, created.by.diveRlib = FALSE) {
+  if (created.by.diveRlib)
+    header$FILEINFO$`CREATED BY` <- diveRlib.ID.string
+
   con <- file("", "w+b")                # build strings in temp file
+  on.exit(close(con))
 
   ## helper function: print with proper newline
   nl <- function(string) { cat(string, mon.line.sep, sep = "", file = con) }
 
-  ## helper fucntion: convert key/value list to dataframe
+  ## helper function: convert key/value list to dataframe
   lst.to.df <- function(sec, pad.key) {
     data.frame(key = names(sec), val = unlist(sec),
                stringsAsFactors = FALSE, row.names = NULL)
   }
 
 
-  ## write heading
+  ## file info part with headings/"banner"; data colon-separated
   nl("Data file for DataLogger.")
-  nl(paste0(rep("=", 78), collapse = ""))
+  nl(str.dup("=", 78))
 
-  ## file info part, colon-separated
   df <- lst.to.df(header$FILEINFO)
   df$key <- pad(df$key, 11)
-  write.table(df, sep = ":", col.names = FALSE, row.names = FALSE,
+  write.table(df, sep = ": ", col.names = FALSE, row.names = FALSE,
               file = con, eol = mon.line.sep, quote = FALSE)
 
-  readLines(con)                        # return stored strings from file
+  nl(c(str.dup("=", 26), "    BEGINNING OF DATA     ", str.dup("=", 26)))
+
+  ## logger info part, equal-sign-separated; write out predfined sections
+  lapply(mon.write.sections,
+         FUN = function(sec) {
+           nl(paste0("[", sec, "]"))
+           df <- lst.to.df(header[[sec]])
+           df$key <- pad(df$key, 26)
+           write.table(df, sep = "=", col.names = FALSE, row.names = FALSE,
+              file = con, eol = mon.line.sep, quote = FALSE)
+         })
+
+  ## return stored strings from file
+  readLines(con)
 }
 
 
 write.mon.complete <- function(filename, mon) {
   df <- mon$data[c("h", "temp")]
-  df$timestamp <- strftime(mon$data$t, format = mon.datetime.format)
+
+  ## format time and numbers for output
+  op <- options(digits.secs = 1)
+  on.exit(options(op))
+  df$t.fmt <- strftime(mon$data$t, format = mon.data.datetime.format)
+  df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
+                      width = 12, drop0trailing = FALSE)
+  df$temp.fmt <- formatC(mon$data$temp, format="f", digits = 2,
+                         width = 11, drop0trailing = FALSE)
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
-  writeLines(but.last(mon$unparsed.header), con, sep = mon.line.sep)
-  cat(nrow(df), mon.line.sep, file = con, sep = "")
-  write.table(df[c("timestamp", "h", "temp")], file = con, eol = mon.line.sep,
+  on.exit(close(con), add = TRUE)
+
+  ## helper function: print with proper newline
+  nl <- function(string = "") { cat(string, mon.line.sep, sep = "", file = con) }
+
+  writeLines(mon$unparsed.header, con, sep = mon.line.sep)
+
+  nl(); nl()
+  nl("[Data]"); nl(nrow(df))
+  write.table(df[c("t.fmt", "h.fmt", "temp.fmt")], sep = " ",
+              file = con, eol = mon.line.sep,
                quote = FALSE, row.names = FALSE, col.names = FALSE)
-  close(con)
+
+  nl("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
 }
 
 
@@ -169,7 +221,7 @@ str.dup <- function(string, times) {
 
 ## pad string to desired length with spaces to the right
 pad <- function(string, len) {
-  paste0(string, str.dup(" ", len - nchar(string)))
+  paste0(string, str.dup(" ", pmax(0, len - nchar(string))))
 }
 
 
