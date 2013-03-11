@@ -9,6 +9,8 @@ mon.max.header.lines <- 70 # Maximum number of lines read for finding
                            # end of header / beginning of data
 
 mon.header.datetime.format <- "%S:%M:%H %d/%m/%y"
+mon.fileinfo.date.format <- "%d/%m/%Y"
+mon.fileinfo.time.format <- "%H:%M:%S"
 mon.data.datetime.format <- "%Y/%m/%d %H:%M:%OS"
 
 mon.timezone <- "Etc/GMT-1" # Attention, here "-" is east of GMT!
@@ -112,6 +114,26 @@ parse.header <- function(unparsed.header) {
            names(val) <- sec[-1, "key"]
            val
          })
+}
+
+
+## Take complete MON data structure, updates header fields "Start
+## date", "End date" and FILEINFO section.  Returns only the updated
+## header structure, so you can feed the return value directly to
+## format.header().  If no filename is given, the old one is kept
+update.header <- function(mon, filename = NULL, t.col = "t") {
+  start.end <- mon$data[c(1, nrow(mon$data)), "t"]
+  mon$hdr[["Series settings"]][c("Start date / time", "End date / time")] <-
+    strftime(start.end, format = mon.header.datetime.format,
+             tz = mon.timezone)
+
+  mon$hdr$FILEINFO$DATE <- strftime(Sys.time(), format=mon.fileinfo.date.format)
+  mon$hdr$FILEINFO$TIME <- strftime(Sys.time(), format=mon.fileinfo.time.format)
+
+  if (!is.null(filename))
+    mon$hdr$FILEINFO$FILENAME <- chartr("/", "\\", filename)
+
+  mon$hdr
 }
 
 
