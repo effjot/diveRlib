@@ -11,6 +11,8 @@ mon.max.header.lines <- 70 # Maximum number of lines read for finding
 mon.header.datetime.format <- "%S:%M:%H %d/%m/%y"
 mon.data.datetime.format <- "%Y/%m/%d %H:%M:%OS"
 
+mon.timezone <- "Etc/GMT-1" # Attention, here "-" is east of GMT!
+
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
 mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series settings", "Channel 1 from data header", "Channel 2 from data header") # sections to write into new MON headers, in order
@@ -34,7 +36,8 @@ read.mon.complete <- function(filename) {
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
-  data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format)
+  data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format,
+                     tz = mon.timezone)
 
   list(data = data[, c("t", "h", "temp")], hdr = hdr, comp = comp,
        unparsed.header = header)
@@ -161,7 +164,8 @@ write.mon.complete <- function(filename, mon) {
   ## format time and numbers for output
   op <- options(digits.secs = 1)
   on.exit(options(op))
-  df$t.fmt <- strftime(mon$data$t, format = mon.data.datetime.format)
+  df$t.fmt <- strftime(mon$data$t, format = mon.data.datetime.format,
+                       tz = mon.timezone)
   df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
                       width = 12, drop0trailing = FALSE)
   df$temp.fmt <- formatC(mon$data$temp, format="f", digits = 2,
@@ -189,11 +193,15 @@ write.mon.complete <- function(filename, mon) {
 ### General
 
 between <- function(i, range) {
-    i >= range[1] & i <= range[2]
+  i >= range[1] & i <= range[2]
+}
+
+last <- function(x) {
+  tail(x, 1)
 }
 
 but.last <- function(x) {
-    head(x, n = -1)
+  head(x, n = -1)
 }
 
 paste.path <- function(...) {
