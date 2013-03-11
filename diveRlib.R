@@ -296,3 +296,14 @@ shift.time <- function(df, offset.seconds, t.col = "t") {
 daylightsaving.to.standard.time <- function(df, t.col = "t") {
   shift.time(df, -3600, t.col)
 }
+
+
+## Return dataframe without measurements before logger was installed
+## (i.e. head ≈ atm. pressure) As default, compare to single threshold
+## value, which should work if the water colum above to logger wasn't
+## too small.  It is also possible to supply a vector, e.g. baro
+## logger values, to compare to.
+remove.out.of.water <- function(df, h.min = 1060, h.col = "h") {
+  first.in.water <- which(df[h.col] > h.min)[1]
+  df[first.in.water:nrow(df), ]
+}
