@@ -19,16 +19,16 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename) {
-  cat("Reading ", filename, ".\n", sep = "")
+  cat("Reading ", filename, "\n", sep = "")
 
   ## read and parse header sections
   header <- readLines(filename, n = mon.max.header.lines)
   data.header.line <- grep("[Data]", header, fixed = TRUE)
-  header <- header[1:(data.header.line - 1)]
+  header <- head(header, data.header.line - 1)
   hdr <- parse.header(header)
 
   ## measurements compensated?
-  comp <- if (hdr$FILEINFO$COMP.STATUS == "Done") TRUE else FALSE
+  comp <- hdr$FILEINFO$COMP.STATUS == "Done"
 
   ## read data
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
