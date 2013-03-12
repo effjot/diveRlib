@@ -226,6 +226,14 @@ but.last <- function(x) {
   head(x, n = -1)
 }
 
+first.last <- function(x) {
+  if (is.data.frame(x)) {
+    x[c(1, nrow(x)), ]
+  } else {
+    c(head(x, 1), tail(x, 1))
+  }
+}
+
 paste.path <- function(...) {
   paste(..., sep = "/")
 }
