@@ -14,6 +14,9 @@ mon.fileinfo.time.format <- "%H:%M:%S"
 mon.data.datetime.format <- "%Y/%m/%d %H:%M:%OS"
 
 mon.timezone <- "Etc/GMT-1" # Attention, here "-" is east of GMT!
+                            # You may also want to set the TZ
+                            # env. variable for displaying timestamps
+                            # accordingly
 
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
@@ -38,8 +41,8 @@ read.mon.complete <- function(filename) {
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      col.names = c("date", "time", "h", "temp"))
-  data$t <- strptime(paste(data$date, data$time), format = mon.data.datetime.format,
-                     tz = mon.timezone)
+  data$t <- as.POSIXct(strptime(paste(data$date, data$time), format = mon.data.datetime.format,
+                                tz = mon.timezone))
 
   list(data = data[, c("t", "h", "temp")], hdr = hdr, comp = comp,
        unparsed.header = header)
