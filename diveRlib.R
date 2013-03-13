@@ -10,6 +10,8 @@ diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writi
 mon.max.header.lines <- 70 # Maximum number of lines read for finding
                            # end of header / beginning of data
 
+mon.upcase.location <- TRUE # Convert location to upper case (Diver Office downcases everything)
+
 mon.header.datetime.format <- "%S:%M:%H %d/%m/%y"
 mon.fileinfo.date.format <- "%d/%m/%Y"
 mon.fileinfo.time.format <- "%H:%M:%S"
@@ -27,7 +29,7 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
-read.mon.complete <- function(filename) {
+read.mon.complete <- function(filename, upcase.location = mon.upcase.location) {
   cat("Reading ", filename, "\n", sep = "")
 
   ## read and parse header sections
@@ -36,8 +38,12 @@ read.mon.complete <- function(filename) {
   header <- head(header, data.header.line - 1)
   hdr <- parse.header(header)
 
+  ## logger location
+  loc <- hdr$Series$Location
+  if (upcase.location) loc <- toupper(loc)
+
   ## measurements compensated?
-  comp <- hdr$FILEINFO$COMP.STATUS == "Done"
+  comp <- hdr$FILEINFO$COMP.STATUS %in% c("Done", "Fertig", "Unvollst.")
 
   ## read data
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
@@ -46,8 +52,8 @@ read.mon.complete <- function(filename) {
   data$t <- as.POSIXct(strptime(paste(data$date, data$time), format = mon.data.datetime.format,
                                 tz = mon.timezone))
 
-  list(data = data[, c("t", "h", "temp")], hdr = hdr, comp = comp,
-       unparsed.header = header)
+  list(loc = loc, comp = comp, data = data[, c("t", "h", "temp")],
+       hdr = hdr, unparsed.header = header)
 }
 
 
