@@ -5,6 +5,8 @@ diveRlib.ID.string <- "diveRlib, v0.1, 2013-03-04" # used (optionally) for writi
 
 ### Data I/O
 
+## Variables / configuration
+
 mon.max.header.lines <- 70 # Maximum number of lines read for finding
                            # end of header / beginning of data
 
@@ -263,6 +265,23 @@ str.dup <- function(string, times) {
 ## pad string to desired length with spaces to the right
 pad <- function(string, len) {
   paste0(string, str.dup(" ", pmax(0, len - nchar(string))))
+}
+
+
+## return a data.frame with renamed columns
+rename.col <- function(df, name.old, name.new) {
+  stopifnot(length(name.old) == length(name.new))
+  if (length(name.old) == 1) {
+    colnames(df)[colnames(df) == name.old] <- name.new
+  } else {
+    # vectorizing with "==" or "%in%" fails when name.old not in same order as colnames
+    col.new <- sapply(colnames(df),
+                      FUN = function(cn) {
+                        if (cn %in% name.old) { name.new[name.old == cn] } else cn
+                      })
+    colnames(df) <- col.new
+  }
+  df
 }
 
 
