@@ -29,6 +29,23 @@ A library for processing van Essen / Schlumberger Diver MON files.  Currently re
   writes `$unparsed.header` and `$data` to a MON file.  If you changed
   `$hdr`, use `format.header()` to get a updated `$unparsed.header`.
 
+* `update.header(mon, filename, t.col)`
+
+  Takes MON data (nested list, as above) and returns an updated header
+  structure (*only* the header structure, so you can use the return
+  value directly in a call to `format.header()`).  These fields in
+  `mon$hdr` are updated:
+
+  - `'Series settings'$'Start date / time'` and `'Series
+    settings'$'End date / time'` are set to the actual start and end
+    of the time series (`mon$data`), in case you modified the data.
+    (Pass name of time colum `t.col` if it isn't the standard `t`.)
+
+  - `FILEINFO$DATE` and `FILEINFO$TIME` are set to the current time.
+  - optionally, the `filename` argument is stored in
+    `FILEINFO$FILENAME`; slashes in the path (as R uses them) are
+    converted to backslashes.
+
 * `format.header(header, created.by.diveRlib)`
 
   Takes header (parsed into nested list) and returns text
@@ -38,6 +55,3 @@ A library for processing van Essen / Schlumberger Diver MON files.  Currently re
   instead of the Diver Office version information.  However, Diver
   Office won't read such a file.  (Which you might intend to avoid
   re-importing duplicates into your database.)
-
-
-
