@@ -55,3 +55,12 @@ A library for processing van Essen / Schlumberger Diver MON files.  Currently re
   instead of the Diver Office version information.  However, Diver
   Office won't read such a file.  (Which you might intend to avoid
   re-importing duplicates into your database.)
+
+* `out.of.water.as.NA(x, h.min)`
+
+  Replace out of water measurements with `NA`.  Compare to threshold
+  value (or vector, e.g. from baro logger) `h.min`; anything less or
+  equal than the threshold is assumed out of water.  Has S3 methods
+  for data.frame and zoo.  For dataframes, you can supply an addtional
+  argument `h.col` for the column name to work with.
+
