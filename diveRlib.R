@@ -354,6 +354,8 @@ t.range.week.of.month <- function(year, month, week, last.week.full = TRUE) {
 }
 
 
+## Shifting timestamps (arbitrary and for removing daylight saving time)
+
 shift.time <- function(df, offset.seconds, t.col = "t") {
   df[[t.col]] <- df[[t.col]] + offset.seconds
   df
@@ -372,4 +374,27 @@ daylightsaving.to.standard.time <- function(df, t.col = "t") {
 remove.out.of.water <- function(df, h.min = 1060, h.col = "h") {
   first.in.water <- which(df[h.col] > h.min)[1]
   df[first.in.water:nrow(df), ]
+}
+
+
+## Replace out of water measurements with NA.  Compare to threshold
+## value (or vector, e.g. from baro logger) h.min; anything less or
+## equal than the threshold is assumed out of water.  Has S3 methods
+## for data.frame and zoo
+
+out.of.water.as.NA <- function(x, h.min = 1060, ...) {
+    class(x) <- data.class(x)
+    UseMethod("out.of.water.as.NA", x)
+}
+
+out.of.water.as.NA.data.frame <- function(x, h.min = 1060, h.col = "h") {
+  out.of.water <- which(x[h.col] <= h.min)
+  x[out.of.water, h.col] <- NA
+  x
+}
+
+out.of.water.as.NA.zoo <- function(x, h.min = 1060) {
+  out.of.water <- which(x <= h.min)
+  x[out.of.water] <- NA
+  x
 }
