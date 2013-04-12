@@ -1,6 +1,9 @@
 Questions and Investigations
 ============================
 
+Exported MON files
+------------------
+
 What is Instrument number?
 
 
@@ -10,6 +13,8 @@ Import into Diver Office, logger not yet present in database
 
    [Series settings] section:
       Serial number, Location taken from here
+
+   Location always lower case, even with upper case in both Logger settings and Series settings.
 
 
 Import into Diver Office with logger/location already in database, new Serial number in both sections
@@ -24,3 +29,14 @@ Import into Diver Office with logger/location already in database, new Location 
 
 Import into Diver Office with logger/location already in database, new Location only in [Logger settings]
 => Import into existing location as new dataset
+
+
+
+Backup files
+------------
+
+only old LDM program, in C:\Programme\LDM\EXE\BackupsOfReadings\
+
+are also MON files
+
+Decimal separator is COMMA! (At least on my German Windows XP.)
