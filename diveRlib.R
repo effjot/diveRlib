@@ -29,7 +29,8 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
-read.mon.complete <- function(filename, upcase.location = mon.upcase.location) {
+read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
+                              dec = ".") {
   cat("Reading ", filename, "\n", sep = "")
 
   ## read and parse header sections
@@ -48,6 +49,7 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location) {
   ## read data
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
+                     dec = dec,
                      col.names = c("date", "time", "h", "temp"))
   data$t <- as.POSIXct(strptime(paste(data$date, data$time), format = mon.data.datetime.format,
                                 tz = mon.timezone))
@@ -58,8 +60,8 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location) {
 
 
 ## Read a single MON file, return only the dataframe
-read.mon <- function(filename) {
-  read.mon.complete(filename)$data
+read.mon <- function(filename, dec = ".") {
+  read.mon.complete(filename, dec = dec)$data
 }
 
 
@@ -110,7 +112,8 @@ parse.header <- function(unparsed.header) {
   li$section <- li$section[which(li$is.sec.name)[cumsum(li$is.sec.name)]]
 
 
-  ## combine both parts, trim whitespace from keys and values (section is alread
+  ## combine both parts, trim whitespace from keys and values (section
+  ## is already trimmed)
   df <- data.frame(section = c(rep("FILEINFO", nrow(file.info) + 1),
                                         # + 1 to generate empty row for section name
                      trim(li$section)),
