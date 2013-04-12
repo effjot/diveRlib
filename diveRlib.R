@@ -354,6 +354,75 @@ t.range.week.of.month <- function(year, month, week, last.week.full = TRUE) {
 }
 
 
+STYLE <-
+  list(data  = list(col = "grey", lwd.normal = 1, lwd.minmax = 0.5),
+       mean  = list(col = "red", lwd = 2),
+       day   = list(col = "aquamarine", lwd = 2),
+       night = list(col = "royalblue3", lwd = 2),
+       quant = list(col = "grey25", lwd.normal = 1, lwd.minmax = 0.8),
+       grid  = list(col = "black", lwd = 0.5, lty = "dotted"),
+       grid.major = list(col = "black", lwd = 0.5, lty = "solid"))
+
+plot.axis.grid.year <- function(t.range, style = STYLE) {
+    axis.POSIXct(1, at=seq(t.range[1], t.range[2], by="months"),
+                 format="%d.%m.")
+    abline(h = seq(0, 40, by = 5),
+           col = style$grid$col, lty = style$grid$lty, lwd = style$grid$lwd)
+    abline(v = seq(t.range[1], t.range[2], by="months"),
+           col = style$grid$col, lty = style$grid$lty, lwd = style$grid$lwd)
+}
+
+plot.axis.grid.years <- function(t.range, short.month.labels = TRUE,
+                                 style = STYLE) {
+    month.seq <- seq(t.range[1] + 365.26/12*86400*0.5,
+                     t.range[2] - 365.26/12*86400*0.5, by = "months")
+    month.labels <- format(month.seq, format = "%b")
+    if (short.month.labels)
+      month.labels <- substr(month.labels, 1, 1)
+
+    axis.POSIXct(1, at=seq(t.range[1], t.range[2], by = "months"),
+                 labels = FALSE)
+    mtext(month.labels, side = 1, line = 0.8, at = month.seq)
+
+#    year.seq <- seq(t.range[1] + 182.6*86400,
+#                    t.range[2] - 182.6*86400, by = "years")
+    year <- as.POSIXlt(t.range)$year + 1900
+
+#### Hack für Juli 2010    year[2] <- year[2]+1
+
+    year.seq <- seq(ISOdate(year[1] - 1, 1, 1),
+                    ISOdate(year[2] + 1, 1, 1), by = "years")
+
+    year.label.seq <- seq(ISOdate(year[1], 7, 1),
+                          ISOdate(year[2] - 1, 7, 1), by = "years")
+
+    ## axis.POSIXct(1, at=seq(t.range[1], t.range[2], by = "years"),
+    ##              labels = FALSE, tck = -0.04)
+    axis.POSIXct(1, at=year.seq, labels = FALSE, tck = -0.04, lwd.ticks = 1.4)
+    mtext(format(year.label.seq, format="%Y"),
+          side = 1, line = 2.5, cex = 1.5, at = year.label.seq)
+
+    abline(h = seq(0, 40, by = 5),
+           col = style$grid$col, lty = style$grid$lty, lwd = style$grid$lwd)
+    abline(v = seq(t.range[1], t.range[2], by = "months"),
+           col = style$grid$col, lty = style$grid$lty, lwd = style$grid$lwd)
+}
+
+
+plot.axis.grid.month <- function(t.range, style = STYLE) {
+    axis.POSIXct(1, at=seq(t.range[1], t.range[2], by="days"), format="%d")
+    abline(h = seq(0, 30, by = 5),
+           col = style$grid$col, lty = style$grid$lty, lwd = style$grid$lwd)
+    v.lines <- seq(t.range[1], t.range[2], by = "days")
+    abline(v = v.lines[as.POSIXlt(v.lines)$wday != 1],
+           col = style$grid$col, lty = style$grid$lty, lwd = style$grid$lwd)
+    abline(v = v.lines[as.POSIXlt(v.lines)$wday == 1],
+           col = style$grid.major$col, lty = style$grid.major$lty,
+           lwd = style$grid.major$lwd)
+}
+
+
+
 ## Shifting timestamps (arbitrary and for removing daylight saving time)
 
 shift.time <- function(df, offset.seconds, t.col = "t") {
