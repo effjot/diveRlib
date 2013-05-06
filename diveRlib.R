@@ -51,7 +51,8 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      dec = dec,
                      col.names = c("date", "time", "h", "temp"))
-  data$t <- as.POSIXct(strptime(paste(data$date, data$time), format = mon.data.datetime.format,
+  data$t <- as.POSIXct(strptime(paste(data$date, data$time),
+                                format = mon.data.datetime.format,
                                 tz = mon.timezone))
 
   list(loc = loc, comp = comp, data = data[, c("t", "h", "temp")],
@@ -62,6 +63,12 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
 ## Read a single MON file, return only the dataframe
 read.mon <- function(filename, dec = ".") {
   read.mon.complete(filename, dec = dec)$data
+}
+
+
+## Read several MON files, return list of dataframes
+read.mons <- function(filenames, dec = ".") {
+  lapply(filenames, FUN = read.mon, dec = dec)
 }
 
 
@@ -224,6 +231,12 @@ write.mon.complete <- function(filename, mon) {
   nl("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
 }
 
+
+## Join list of several logger dataframes into a single dataframe in
+## the given order (does not yet check is they are chronological)
+join.data <- function(dataframes) {
+  do.call(rbind, dataframes)
+}
 
 
 ### General
