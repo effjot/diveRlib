@@ -54,5 +54,25 @@ baro.all.files.2 <-
   paste.path(base.dir,
                paste.path("Bruchwald ÜLN, Auslesung 2013-05-03",
                           "Baro Bruchwald ULN^K1941^13-05-03 15-08-51.MON"))
-baro.data <- join.data(c(read.mons(baro.all.files.1),
-                         read.mons(baro.all.files.2, dec = ",")))
+
+fix.baro.overlap <- function(baro.df) {
+  t.change <- which(baro.df$t == ISOdatetime(2011, 5, 5, 11, 45, 0))
+  i <- c(1:t.change[1], (t.change[2]+1):nrow(baro.df))
+  baro.df[i, ]
+}
+
+baro.data <- fix.baro.overlap(
+  join.data(c(read.mons(baro.all.files.1),
+              read.mons(baro.all.files.2, dec = ","))))
+baro.zoo <- zoo(baro.data$h, baro.data$t)
+
+
+w220 <- read.mon(paste.path(base.dir,
+                            "Bruchwald ÜLN, Auslesung 2013-05-03",
+                            "GW-WAS-220^J5298^13-05-03 14-02-33.MON"),
+                 dec = ",")
+z220 <- out.of.water.as.NA(zoo(w220$h, w220$t))
+
+#test data for baro.comp: shifted wrt baro
+x220 <- shift.time(w220, 8*60)
+xz220 <- out.of.water.as.NA(zoo(x220$h, x220$t))
