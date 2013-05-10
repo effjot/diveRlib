@@ -494,3 +494,23 @@ fill.gaps.zoo <- function(x, FUN = na.approx) {
   xout <- seq(t[1], last(t), by = deltat(x))
   as.zooreg(do.call(FUN, list(x, xout = xout)))
 }
+
+
+### Barometric compensation
+
+## Constants and utilities
+
+grav <- 9.81                      # gravity of Earth, in N/kg
+rho.w.10 <- 0.99974               # density of water at 10°C, in kg/m³
+
+rho.w <- function(temp) {
+  1/(1+((2.31*temp-2)^2-182)*0.000001)
+}
+
+## Compensate raw water colum data (zoo) with baro measurements (zoo)
+baro.comp <- function(w.raw, baro) {
+  stopifnot(is.zoo(w.raw), is.zoo(baro))
+  b <- na.approx(baro, xout = time(w.raw)) # interpol. missing baro data
+  m <- merge(w.raw, b)
+  m$w.raw - m$b
+}
