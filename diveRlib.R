@@ -483,3 +483,14 @@ out.of.water.as.NA.zoo <- function(x, h.min = 1060) {
   x[out.of.water] <- NA
   x
 }
+
+
+## Fill in gaps (i.e. logger was not running, no records produced) in
+## weakly regular zoo time series, using na.approx
+## (lin. interpolation) as default.  Result is a regular time series.
+fill.gaps.zoo <- function(x, FUN = na.approx) {
+  stopifnot(is.regular(x, strict = FALSE))
+  t <- time(temp.zoo)
+  xout <- seq(t[1], last(t), by = deltat(x))
+  as.zooreg(do.call(FUN, list(x, xout = xout)))
+}
