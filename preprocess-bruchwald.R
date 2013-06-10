@@ -113,3 +113,7 @@ diver.files <- lapply(
 diver.data <- lapply(diver.files,
                      Compose(join.data,
                              Curry(read.mons, dec = "auto")))
+
+diver.zoo <- lapply(diver.data,
+                    Compose(out.of.water.as.NA,
+                            function(x) zoo(x$h, x$t)))
