@@ -35,17 +35,22 @@ if (do.fix) {
   }
 
   cur.dir <- paste.path(base.dir, "Bruchwald ÜLN, Auslesung 2013-02-23")
-
   fix.file(cur.dir, "gw-was-206_130225124849_75778.MON")
   fix.file(cur.dir, "lp-brw-5op_130225125129_75779.MON")
   fix.file(cur.dir, "gw-was-212_130225124909_J5284.MON")
   fix.file(cur.dir, "gw-was-213_130225125016_N0144.MON")
+
+  cur.dir <- paste.path(base.dir, "Bruchwald ÜLN, Auslesung 2013-03-25+26")
+  fix.file(cur.dir, "GW-WAS-206.MON")
+  fix.file(cur.dir, "GW-WAS-212.MON")
+  fix.file(cur.dir, "GW-WAS-213.MON")
+  fix.file(cur.dir, "LP-BRW-5OP.MON")
 }
 
 
 ### komplette Baro-Zeitreihe
 
-baro.all.files.1 <-
+baro.all.files <-
   paste.path(base.dir,
              c(paste.path(c("Bruchwald ÜLN, Auslesung 2011-05-05",
                             "Bruchwald ÜLN, Auslesung 2011-05-11",
@@ -58,11 +63,9 @@ baro.all.files.1 <-
                paste.path("Bruchwald ÜLN, Auslesung 2013-02-23",
                           "baro bruchwald uln_130225124744_K1941.MON"),
                paste.path("Bruchwald ÜLN, Auslesung 2013-03-25+26",
-                          "Baro Bruchwald ULN.MON")))
-baro.all.files.2 <-
-  paste.path(base.dir,
+                          "Baro Bruchwald ULN.MON"),
                paste.path("Bruchwald ÜLN, Auslesung 2013-05-17",
-                          "Baro Bruchwald ULN^K1941^13-05-17 16-09-13.MON"))
+                          "Baro Bruchwald ULN^K1941^13-05-17 16-09-13.MON")))
 
 ## Überlappung Parallelbetrieb während Loggerwechsel
 fix.baro.overlap <- function(baro.df) {
@@ -71,10 +74,12 @@ fix.baro.overlap <- function(baro.df) {
   baro.df[i, ]
 }
 
-baro.data <- fix.baro.overlap(
-  join.data(c(read.mons(baro.all.files.1),
-              read.mons(baro.all.files.2, dec = ","))))
+baro.data <- Compose(fix.baro.overlap, join.data,
+                     Curry(read.mons, dec = "auto"))(baro.all.files)
+
 baro.zoo <- zoo(baro.data$h, baro.data$t)
+
+
 
 
 w220 <- read.mon(paste.path(base.dir,
@@ -87,15 +92,16 @@ z220 <- out.of.water.as.NA(zoo(w220$h, w220$t))
 x220 <- shift.time(w220, 8*60)
 xz220 <- out.of.water.as.NA(zoo(x220$h, x220$t))
 
+
+
 diver.files <- lapply(
   list(
     was205 = c(paste.path("2011-08-02", "GW-WAS-205"),
       paste.path("2011-11-08", "GW-WAS-205"),
       paste.path("2011-12-09", "GW-WAS-205"),
       paste.path("2012-08-27", "GW-WAS-205"),
-      paste.path("2013-02-23", "gw-was-205_130225124814_J9438"),
       paste.path("2013-03-28+04-05", "GW-WAS-205")),
-    was206 = c(paste.path("2013-03-25+26", "GW-WAS-206"),
+    was206 = c(paste.path("2013-03-25+26", "KORR_GW-WAS-206"),
       paste.path("2013-03-28+04-05", "GW-WAS-206"))
     ),
   function(f) {
