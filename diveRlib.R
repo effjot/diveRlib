@@ -31,11 +31,12 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
                               dec = ".") {
+
   ## select decimal separator
   ## FIXME: this should be more clever and robust, i.e. look into the file;
   ##  currently checks for circumflex in the files taken from LDM backup dir
   if (dec == "auto") {
-    dec <- if (grep("^", filename, fixed = TRUE))
+    dec <- if (grepl("^", filename, fixed = TRUE))
               "," else "."
   }
 
@@ -241,7 +242,7 @@ write.mon.complete <- function(filename, mon) {
 
 
 ## Join list of several logger dataframes into a single dataframe in
-## the given order (does not yet check is they are chronological)
+## the given order (does not yet check if they are chronological)
 join.data <- function(dataframes) {
   do.call(rbind, dataframes)
 }
