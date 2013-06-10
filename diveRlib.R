@@ -31,7 +31,15 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
                               dec = ".") {
-  cat("Reading ", filename, "\n", sep = "")
+  ## select decimal separator
+  ## FIXME: this should be more clever and robust, i.e. look into the file;
+  ##  currently checks for circumflex in the files taken from LDM backup dir
+  if (dec == "auto") {
+    dec <- if (grep("^", filename, fixed = TRUE))
+              "," else "."
+  }
+
+  cat("Reading ", filename, " with dec=", dec, "\n", sep = "")
 
   ## read and parse header sections
   header <- readLines(filename, n = mon.max.header.lines)
