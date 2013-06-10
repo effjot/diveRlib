@@ -4,6 +4,15 @@
 
 library(zoo)
 
+library(functional)
+Compose <- function (...) {             # redefine for
+  fs <- rev(list(...))                  # proper order
+  if (!all(sapply(fs, is.function)))
+    stop("Argument is not a function")
+  function(...) Reduce(function(x, f) f(x), fs, ...)
+}
+
+
 Sys.setenv(TZ="Etc/GMT-1")
 
 
@@ -52,9 +61,10 @@ baro.all.files.1 <-
                           "Baro Bruchwald ULN.MON")))
 baro.all.files.2 <-
   paste.path(base.dir,
-               paste.path("Bruchwald ÜLN, Auslesung 2013-05-03",
-                          "Baro Bruchwald ULN^K1941^13-05-03 15-08-51.MON"))
+               paste.path("Bruchwald ÜLN, Auslesung 2013-05-17",
+                          "Baro Bruchwald ULN^K1941^13-05-17 16-09-13.MON"))
 
+## Überlappung Parallelbetrieb während Loggerwechsel
 fix.baro.overlap <- function(baro.df) {
   t.change <- which(baro.df$t == ISOdatetime(2011, 5, 5, 11, 45, 0))
   i <- c(1:t.change[1], (t.change[2]+1):nrow(baro.df))
@@ -76,3 +86,24 @@ z220 <- out.of.water.as.NA(zoo(w220$h, w220$t))
 #test data for baro.comp: shifted wrt baro
 x220 <- shift.time(w220, 8*60)
 xz220 <- out.of.water.as.NA(zoo(x220$h, x220$t))
+
+diver.files <- lapply(
+  list(
+    was205 = c(paste.path("2011-08-02", "GW-WAS-205"),
+      paste.path("2011-11-08", "GW-WAS-205"),
+      paste.path("2011-12-09", "GW-WAS-205"),
+      paste.path("2012-08-27", "GW-WAS-205"),
+      paste.path("2013-02-23", "gw-was-205_130225124814_J9438"),
+      paste.path("2013-03-28+04-05", "GW-WAS-205")),
+    was206 = c(paste.path("2013-03-25+26", "GW-WAS-206"),
+      paste.path("2013-03-28+04-05", "GW-WAS-206"))
+    ),
+  function(f) {
+    paste(paste.path(base.dir, "Bruchwald ÜLN, Auslesung "),
+          f, ".MON", sep = "")
+  }
+)
+
+diver.data <- lapply(diver.files,
+                     Compose(join.data,
+                             Curry(read.mons, dec = "auto")))
