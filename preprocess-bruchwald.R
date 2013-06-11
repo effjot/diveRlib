@@ -82,15 +82,15 @@ baro.zoo <- zoo(baro.data$h, baro.data$t)
 
 
 
-w220 <- read.mon(paste.path(base.dir,
-                            "Bruchwald ÜLN, Auslesung 2013-05-03",
-                            "GW-WAS-220^J5298^13-05-03 14-02-33.MON"),
-                 dec = ",")
-z220 <- out.of.water.as.NA(zoo(w220$h, w220$t))
+## w220 <- read.mon(paste.path(base.dir,
+##                             "Bruchwald ÜLN, Auslesung 2013-05-03",
+##                             "GW-WAS-220^J5298^13-05-03 14-02-33.MON"),
+##                  dec = ",")
+## z220 <- out.of.water.as.NA(zoo(w220$h, w220$t))
 
-#test data for baro.comp: shifted wrt baro
-x220 <- shift.time(w220, 8*60)
-xz220 <- out.of.water.as.NA(zoo(x220$h, x220$t))
+## #test data for baro.comp: shifted wrt baro
+## x220 <- shift.time(w220, 8*60)
+## xz220 <- out.of.water.as.NA(zoo(x220$h, x220$t))
 
 
 
@@ -102,9 +102,15 @@ diver.files <- lapply(
       paste.path("2012-08-27", "GW-WAS-205"),
       paste.path("2013-03-28+04-05", "GW-WAS-205")),
     was206 = c(paste.path("2013-03-25+26", "KORR_GW-WAS-206"),
-      paste.path("2013-03-28+04-05", "GW-WAS-206"))
+      paste.path("2013-03-28+04-05", "GW-WAS-206")),
+    was209 = c(paste.path("2011-05-05", "GW-WAS-209 Location korrigiert"),
+      paste.path("2011-08-02", "GW-WAS-209"),
+      paste.path("2011-10-21", "GW-WAS-209"),
+      paste.path("2012-07-12", "gw-was-209_120713112908_H0997"),
+      paste.path("2013-02-23", "gw-was-209_130225124858_H0997"),
+      paste.path("2013-05-17", "GW-WAS-209^H0997^13-05-17 15-11-54"))
     ),
-  function(f) {
+  FUN = function(f) {
     paste(paste.path(base.dir, "Bruchwald ÜLN, Auslesung "),
           f, ".MON", sep = "")
   }
