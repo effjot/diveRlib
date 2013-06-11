@@ -27,7 +27,7 @@ do.fix <- FALSE
 if (do.fix) {
   fix.file <- function(dir, basename) {
     filenames <- paste.path(dir, paste0(c("", "KORR_"), basename))
-    x <- read.mon.complete(filenames[1])
+    x <- read.mon.complete(filenames[1], dec = "auto")
     x$data <- daylightsaving.to.standard.time(x$data)
     x$data <- remove.out.of.water(x$data)
     x$unparsed.header <- format.header(update.header(x, filenames[2]))
@@ -45,6 +45,9 @@ if (do.fix) {
   fix.file(cur.dir, "GW-WAS-212.MON")
   fix.file(cur.dir, "GW-WAS-213.MON")
   fix.file(cur.dir, "LP-BRW-5OP.MON")
+
+  cur.dir <- paste.path(base.dir, "Bruchwald ÜLN, Auslesung 2013-05-03")
+  fix.file(cur.dir, "GW-WAS-220^J5298^13-05-03 14-02-33.MON")
 }
 
 
@@ -95,21 +98,42 @@ baro.zoo <- zoo(baro.data$h, baro.data$t)
 
 
 diver.files <- lapply(
-  list(      # for each logger, vector of date-basename pairs
-    was205 = c("2011-08-02", "GW-WAS-205",
-      "2011-11-08", "GW-WAS-205",
-      "2011-12-09", "GW-WAS-205",
-      "2012-08-27", "GW-WAS-205",
-      "2013-03-28+04-05", "GW-WAS-205"),
-    was206 = c("2013-03-25+26", "KORR_GW-WAS-206",
-      "2013-03-28+04-05", "GW-WAS-206"),
-    was209 = c("2011-05-05", "GW-WAS-209 Location korrigiert",
-      "2011-08-02", "GW-WAS-209",
-      "2011-10-21", "GW-WAS-209",
-      "2012-07-12", "gw-was-209_120713112908_H0997",
-      "2013-02-23", "gw-was-209_130225124858_H0997",
-      "2013-05-17", "GW-WAS-209^H0997^13-05-17 15-11-54")
-    ),
+  # for each logger, vector of date-basename pairs
+  list(was205 = c("2011-08-02", "GW-WAS-205",
+         "2011-11-08", "GW-WAS-205",
+         "2011-12-09", "GW-WAS-205",
+         "2012-08-27", "GW-WAS-205",
+         "2013-03-28+04-05", "GW-WAS-205"),
+       was206 = c("2013-03-25+26", "KORR_GW-WAS-206",
+         "2013-03-28+04-05", "GW-WAS-206"),
+       was209 = c("2011-05-05", "GW-WAS-209 Location korrigiert",
+         "2011-08-02", "GW-WAS-209",
+         "2011-10-21", "GW-WAS-209",
+         "2012-07-12", "gw-was-209_120713112908_H0997",
+         "2013-02-23", "gw-was-209_130225124858_H0997",
+         "2013-05-17", "GW-WAS-209^H0997^13-05-17 15-11-54"),
+       was210 = c("2013-05-17", "GW-WAS-210^J4511^13-05-17 15-05-50"),
+       was212 = c("2013-03-25+26", "KORR_GW-WAS-212",
+         "2013-05-03", "GW-WAS-212^J5284^13-05-03 14-44-03"),
+       was213 = c("2013-03-25+26", "KORR_GW-WAS-213",
+         "2013-05-03", "GW-WAS-213^N0144^13-05-03 14-52-54"),
+       was220 = c("2013-05-03", "GW-WAS-220^J5298^13-05-03 14-02-33"),
+       was216 = c("2011-07-13", "GW-WAS-216",
+         "2011-10-21", "GW-WAS-216",
+         "2012-03-30", "GW-WAS-216",
+         "2012-07-12", "gw-was-216_120713112941_F0432",
+         "2013-02-23", "gw-was-216_130225125025_F0432",
+         "2013-03-25+26", "GW-WAS-216",
+         "2013-05-17", "GW-WAS-216^F0432^13-05-17 16-10-27"),
+       was224 = c("2011-10-21", "GW-WAS-224",
+         "2012-03-30", "GW-WAS-224",
+         "2012-07-12", "gw-was-224_120713113201_G0181",
+         "2013-02-23", "gw-was-224_130225125118_G0181",
+         "2013-03-25+26", "GW-WAS-224",
+         "2013-05-17", "GW-WAS-224^G0181^13-05-17 16-13-21"),
+       lp5 = c("2013-03-25+26", "KORR_LP-BRW-5OP",
+         "2013-05-03", "LP-BRW-5OP^75779^13-05-03 14-34-29")
+  ),
   FUN = function(dat.name) {
     paste.path(base.dir,
                paste("Bruchwald ÜLN, Auslesung",
@@ -126,3 +150,7 @@ diver.data <- lapply(diver.files,
 diver.zoo <- lapply(diver.data,
                     Compose(out.of.water.as.NA,
                             function(x) zoo(x$h, x$t)))
+
+wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
+
+wc <- do.call(merge, wat.col)
