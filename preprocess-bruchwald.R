@@ -95,24 +95,27 @@ baro.zoo <- zoo(baro.data$h, baro.data$t)
 
 
 diver.files <- lapply(
-  list(
-    was205 = c(paste.path("2011-08-02", "GW-WAS-205"),
-      paste.path("2011-11-08", "GW-WAS-205"),
-      paste.path("2011-12-09", "GW-WAS-205"),
-      paste.path("2012-08-27", "GW-WAS-205"),
-      paste.path("2013-03-28+04-05", "GW-WAS-205")),
-    was206 = c(paste.path("2013-03-25+26", "KORR_GW-WAS-206"),
-      paste.path("2013-03-28+04-05", "GW-WAS-206")),
-    was209 = c(paste.path("2011-05-05", "GW-WAS-209 Location korrigiert"),
-      paste.path("2011-08-02", "GW-WAS-209"),
-      paste.path("2011-10-21", "GW-WAS-209"),
-      paste.path("2012-07-12", "gw-was-209_120713112908_H0997"),
-      paste.path("2013-02-23", "gw-was-209_130225124858_H0997"),
-      paste.path("2013-05-17", "GW-WAS-209^H0997^13-05-17 15-11-54"))
+  list(      # for each logger, vector of date-basename pairs
+    was205 = c("2011-08-02", "GW-WAS-205",
+      "2011-11-08", "GW-WAS-205",
+      "2011-12-09", "GW-WAS-205",
+      "2012-08-27", "GW-WAS-205",
+      "2013-03-28+04-05", "GW-WAS-205"),
+    was206 = c("2013-03-25+26", "KORR_GW-WAS-206",
+      "2013-03-28+04-05", "GW-WAS-206"),
+    was209 = c("2011-05-05", "GW-WAS-209 Location korrigiert",
+      "2011-08-02", "GW-WAS-209",
+      "2011-10-21", "GW-WAS-209",
+      "2012-07-12", "gw-was-209_120713112908_H0997",
+      "2013-02-23", "gw-was-209_130225124858_H0997",
+      "2013-05-17", "GW-WAS-209^H0997^13-05-17 15-11-54")
     ),
-  FUN = function(f) {
-    paste(paste.path(base.dir, "Bruchwald ÜLN, Auslesung "),
-          f, ".MON", sep = "")
+  FUN = function(dat.name) {
+    paste.path(base.dir,
+               paste("Bruchwald ÜLN, Auslesung",
+                     odd.numbered.elements(dat.name)),
+               paste(even.numbered.elements(dat.name),
+                     "MON", sep = "."))
   }
 )
 
