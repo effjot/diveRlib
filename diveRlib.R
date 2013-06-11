@@ -270,6 +270,13 @@ first.last <- function(x) {
   }
 }
 
+even.numbered.elements <- function(v) {
+  v[seq(along.with = v) %% 2 == 0]
+}
+odd.numbered.elements <- function(v) {
+  v[seq(along.with = v) %% 2 == 1]
+}
+
 paste.path <- function(...) {
   paste(..., sep = "/")
 }
