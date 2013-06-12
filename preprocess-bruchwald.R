@@ -51,24 +51,27 @@ if (do.fix) {
 }
 
 
-### komplette Baro-Zeitreihe
+### Read complete baro timeseries
 
-baro.all.files <-
-  paste.path(base.dir,
-             c(paste.path(c("Bruchwald ÜLN, Auslesung 2011-05-05",
-                            "Bruchwald ÜLN, Auslesung 2011-05-11",
-                            "Bruchwald ÜLN, Auslesung 2011-10-21",
-#                            "Bruchwald ÜLN, Auslesung 2012-02-29",
-                            "Bruchwald ÜLN, Auslesung 2012-03-30"),
-                          "Baro Bruchwald ULN.MON"),
-               paste.path("Bruchwald ÜLN, Auslesung 2012-07-12",
-                          "baro bruchwald uln_120713112829_K1941.MON"),
-               paste.path("Bruchwald ÜLN, Auslesung 2013-02-23",
-                          "baro bruchwald uln_130225124744_K1941.MON"),
-               paste.path("Bruchwald ÜLN, Auslesung 2013-03-25+26",
-                          "Baro Bruchwald ULN.MON"),
-               paste.path("Bruchwald ÜLN, Auslesung 2013-05-17",
-                          "Baro Bruchwald ULN^K1941^13-05-17 16-09-13.MON")))
+baro.all.files <- do.call(
+  function(dat.name) {
+    paste.path(base.dir,
+               paste("Bruchwald ÜLN, Auslesung",
+                     odd.numbered.elements(dat.name)),
+               paste(even.numbered.elements(dat.name),
+                     "MON", sep = "."))
+  }, list(
+    # for each logger, vector of date-basename pairs
+    c("2011-05-05", "Baro Bruchwald ULN",
+      "2011-05-11", "Baro Bruchwald ULN",
+      "2011-10-21", "Baro Bruchwald ULN",
+      "2012-03-30", "Baro Bruchwald ULN",
+      "2012-07-12", "baro bruchwald uln_120713112829_K1941.MON",
+      "2013-02-23", "baro bruchwald uln_130225124744_K1941.MON",
+      "2013-03-25+26", "Baro Bruchwald ULN.MON",
+      "2013-05-17", "Baro Bruchwald ULN^K1941^13-05-17 16-09-13.MON")
+    )
+  )
 
 ## Überlappung Parallelbetrieb während Loggerwechsel
 fix.baro.overlap <- function(baro.df) {
