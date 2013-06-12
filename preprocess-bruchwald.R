@@ -51,27 +51,33 @@ if (do.fix) {
 }
 
 
-### Read complete baro timeseries
+### Read all data into data.frames and (list of) zoo objects
 
-baro.all.files <- do.call(
-  function(dat.name) {
-    paste.path(base.dir,
-               paste("Bruchwald ÜLN, Auslesung",
-                     odd.numbered.elements(dat.name)),
-               paste(even.numbered.elements(dat.name),
-                     "MON", sep = "."))
-  }, list(
-    # for each logger, vector of date-basename pairs
-    c("2011-05-05", "Baro Bruchwald ULN",
-      "2011-05-11", "Baro Bruchwald ULN",
-      "2011-10-21", "Baro Bruchwald ULN",
-      "2012-03-30", "Baro Bruchwald ULN",
-      "2012-07-12", "baro bruchwald uln_120713112829_K1941.MON",
-      "2013-02-23", "baro bruchwald uln_130225124744_K1941.MON",
-      "2013-03-25+26", "Baro Bruchwald ULN.MON",
-      "2013-05-17", "Baro Bruchwald ULN^K1941^13-05-17 16-09-13.MON")
-    )
-  )
+## Helper function: build complete filenames from fixed and variable parts;
+## takes vector of date (i.e. subdir suffix) -- filename pairs
+
+build.filenames <- function(dat.name, dir = base.dir,
+                            subdir.basename = "Bruchwald ÜLN, Auslesung",
+                            ext = "MON") {
+  paste.path(dir,
+             paste(subdir.basename,
+                   odd.numbered.elements(dat.name)),
+             paste(even.numbered.elements(dat.name),
+                   "MON", sep = "."))
+}
+
+
+## Baro timeseries
+
+baro.all.files <- build.filenames(c(
+  "2011-05-05", "Baro Bruchwald ULN",
+  "2011-05-11", "Baro Bruchwald ULN",
+  "2011-10-21", "Baro Bruchwald ULN",
+  "2012-03-30", "Baro Bruchwald ULN",
+  "2012-07-12", "baro bruchwald uln_120713112829_K1941",
+  "2013-02-23", "baro bruchwald uln_130225124744_K1941",
+  "2013-03-25+26", "Baro Bruchwald ULN",
+  "2013-05-17", "Baro Bruchwald ULN^K1941^13-05-17 16-09-13"))
 
 ## Überlappung Parallelbetrieb während Loggerwechsel
 fix.baro.overlap <- function(baro.df) {
@@ -86,22 +92,9 @@ baro.data <- Compose(fix.baro.overlap, join.data,
 baro.zoo <- zoo(baro.data$h, baro.data$t)
 
 
-
-
-## w220 <- read.mon(paste.path(base.dir,
-##                             "Bruchwald ÜLN, Auslesung 2013-05-03",
-##                             "GW-WAS-220^J5298^13-05-03 14-02-33.MON"),
-##                  dec = ",")
-## z220 <- out.of.water.as.NA(zoo(w220$h, w220$t))
-
-## #test data for baro.comp: shifted wrt baro
-## x220 <- shift.time(w220, 8*60)
-## xz220 <- out.of.water.as.NA(zoo(x220$h, x220$t))
-
-
+## Diver timeseries
 
 diver.files <- lapply(
-  # for each logger, vector of date-basename pairs
   list(was205 = c("2011-08-02", "GW-WAS-205",
          "2011-11-08", "GW-WAS-205",
          "2011-12-09", "GW-WAS-205",
@@ -137,14 +130,8 @@ diver.files <- lapply(
        lp5 = c("2013-03-25+26", "KORR_LP-BRW-5OP",
          "2013-05-03", "LP-BRW-5OP^75779^13-05-03 14-34-29")
   ),
-  FUN = function(dat.name) {
-    paste.path(base.dir,
-               paste("Bruchwald ÜLN, Auslesung",
-                     odd.numbered.elements(dat.name)),
-               paste(even.numbered.elements(dat.name),
-                     "MON", sep = "."))
-  }
-)
+  FUN = build.filenames)
+
 
 diver.data <- lapply(diver.files,
                      Compose(join.data,
@@ -153,6 +140,9 @@ diver.data <- lapply(diver.files,
 diver.zoo <- lapply(diver.data,
                     Compose(out.of.water.as.NA,
                             function(x) zoo(x$h, x$t)))
+
+
+### Baro-compensation (only zoo)
 
 wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
 
