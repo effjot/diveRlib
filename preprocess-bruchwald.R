@@ -150,16 +150,30 @@ wc <- do.call(merge, wat.col)
 
 
 wat.depth <- list()
+wat.depth$was205 <- -(200.5 - 0.51 - wat.col$was205)
+wat.depth$was209 <- -(220.0 - 0.39 - wat.col$was209)
+wat.depth$was210 <- -(458.2 - 0.81 - wat.col$was210)
 wat.depth$was212 <- -(262.4 - 0.55 - wat.col$was212)
 wat.depth$was213 <- -(238.2 - 0.75 - wat.col$was213)
 wat.depth$was216 <- -(303 - 0.66 - wat.col$was216)#wurde 2011 verlängert
 wat.depth$was224 <- -(291 - 0.80 - wat.col$was224)
 
 wat.level <- list()
+wat.level$was205 <- 38.427 + wat.depth$was205/100 #nicht konst.
+wat.level$was209 <- 38.574 + wat.depth$was209/100
+wat.level$was210 <- 39.147 + wat.depth$was210/100
 wat.level$was212 <- 38.206 + wat.depth$was212/100
 wat.level$was213 <- 38.429 + wat.depth$was213/100
 wat.level$was216 <- 38.924 + wat.depth$was216/100
 wat.level$was224 <- 39.030 + wat.depth$was224/100
 
+
 dw <- do.call(merge, wat.depth)
 h <- do.call(merge, wat.level)
+
+
+# Test-Plots
+
+plot(h[, c("was216", "was224")], screens=1, col=c("green", "blue"), ylim=c(36.8,37.6))
+
+plot(window(wc[, c("was212", "was213")], start=ISOdate(2012,10,20), end=ISOdate(2013,05,1)), screens=1, col=c("green", "blue"))
