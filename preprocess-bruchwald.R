@@ -167,7 +167,6 @@ wat.level$was213 <- 38.429 + wat.depth$was213/100
 wat.level$was216 <- 38.924 + wat.depth$was216/100
 wat.level$was224 <- 39.030 + wat.depth$was224/100
 
-
 dw <- do.call(merge, wat.depth)
 h <- do.call(merge, wat.level)
 
