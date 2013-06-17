@@ -183,7 +183,6 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
                stringsAsFactors = FALSE, row.names = NULL)
   }
 
-
   ## file info part with headings/"banner"; data colon-separated
   nl("Data file for DataLogger.")
   nl(str.dup("=", 78))
@@ -195,7 +194,7 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
 
   nl(c(str.dup("=", 26), "    BEGINNING OF DATA     ", str.dup("=", 26)))
 
-  ## logger info part, equal-sign-separated; write out predfined sections
+  ## logger info part, equal-sign-separated; write out predefined sections
   lapply(mon.write.sections,
          FUN = function(sec) {
            nl(paste0("[", sec, "]"))
