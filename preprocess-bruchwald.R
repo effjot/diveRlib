@@ -147,3 +147,16 @@ diver.zoo <- lapply(diver.data,
 wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
 
 wc <- do.call(merge, wat.col)
+
+
+## tests for working with logger geometry
+
+diver.geometry <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv")
+
+l205 <- zoo(as.matrix(diver.geometry[diver.geometry$loc == "GW-WAS-205", c("h.0", "l")]),
+            diver.geometry[diver.geometry$loc == "GW-WAS-205", "t"])
+x <- merge(wat.col$was205, l205)
+y <- na.locf(x[, c("h.0", "l")])
+z <- merge(wat.col$was205, y)
+colnames(z) <- c("wc", "h.0", "l")
+z$h <- with(z, h.0 - l + wc)

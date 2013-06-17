@@ -248,6 +248,19 @@ join.data <- function(dataframes) {
 }
 
 
+## Read diver geometry (installation depths etc.) from Excel-exported CSV
+read.diver.geometry <- function(filename) {
+  geo <- read.csv2(filename, as.is = TRUE)
+  geo <- rename.col(geo,
+                          c("Mst.", "L.nge.Aufh.ngung..cm.", "H.he.ROK..cm.NHN."),
+                          c("loc", "l", "h.0"))
+  geo$t <- as.POSIXct(strptime(paste(geo$Datum, geo$Uhrzeit),
+                                     format = "%d.%m.%Y %H:%M"))
+  geo[c("loc", "t", "h.0", "l")]
+}
+
+
+
 ### General
 
 between <- function(i, range) {
@@ -512,7 +525,7 @@ fill.gaps.zoo <- function(x, FUN = na.approx) {
 }
 
 
-### Barometric compensation
+### Barometric compensation and water level calculation
 
 ## Constants and utilities
 
