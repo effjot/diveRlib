@@ -56,6 +56,16 @@ A library for processing van Essen / Schlumberger Diver MON files.  Currently re
   Office won't read such a file.  (Which you might intend to avoid
   re-importing duplicates into your database.)
 
+* `read.diver.geometry(filename, col.names, date.format, time.format)`
+
+  Reads geometry info (installation depth, welltop elevation, etc.)
+  from CSV2 file.  Order of colums in the file can be set with
+  `col.names`, which must at least contain `loc` (location/well name),
+  `l` (cable length), `h.0` (absolute elevation of welltop / measuring
+  point) and `date`+`time` for these records.  The default is
+  `c("loc", "date", "time", "l", "h.0", "serial", "comment")`.
+  Returns dataframe with colums `loc`, `t` (timestamp), `h.0`, `l`.
+
 * `out.of.water.as.NA(x, h.min)`
 
   Replace out of water measurements with `NA`.  Compare to threshold

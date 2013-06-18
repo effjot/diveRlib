@@ -249,13 +249,14 @@ join.data <- function(dataframes) {
 
 
 ## Read diver geometry (installation depths etc.) from Excel-exported CSV
-read.diver.geometry <- function(filename) {
-  geo <- read.csv2(filename, as.is = TRUE)
-  geo <- rename.col(geo,
-                          c("Mst.", "L.nge.Aufh.ngung..cm.", "H.he.ROK..cm.NHN."),
-                          c("loc", "l", "h.0"))
-  geo$t <- as.POSIXct(strptime(paste(geo$Datum, geo$Uhrzeit),
-                                     format = "%d.%m.%Y %H:%M"))
+read.diver.geometry <- function(filename,
+                                col.names = c("loc", "date", "time",
+                                  "l", "h.0", "serial", "comment"),
+                                date.format = "%d.%m.%Y",
+                                time.format = "%H:%M") {
+  geo <- read.csv2(filename, as.is = TRUE, col.names = col.names)
+  geo$t <- as.POSIXct(strptime(paste(geo$date, geo$time),
+                               format = paste(date.format, time.format)))
   geo[c("loc", "t", "h.0", "l")]
 }
 
@@ -433,7 +434,7 @@ plot.axis.grid.years <- function(t.range, short.month.labels = TRUE,
 #                    t.range[2] - 182.6*86400, by = "years")
     year <- as.POSIXlt(t.range)$year + 1900
 
-#### Hack für Juli 2010    year[2] <- year[2]+1
+## Hack für Juli 2010    year[2] <- year[2]+1
 
     year.seq <- seq(ISOdate(year[1] - 1, 1, 1),
                     ISOdate(year[2] + 1, 1, 1), by = "years")
