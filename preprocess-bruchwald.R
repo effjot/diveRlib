@@ -13,18 +13,20 @@ Compose <- function (...) {             # redefine for
 }
 
 
+### Setup
+
+do.fixfiles <- FALSE
+do.readdata <- FALSE
+do.compensation <- FALSE
+
 Sys.setenv(TZ="Etc/GMT-1")
-
-
-### Verzeichnis
 
 base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
 
 
 ### Korrektur Zeitversatz (irrtümlich Sommerzeit)
 
-do.fix <- FALSE
-if (do.fix) {
+if (do.fixfiles) {
   fix.file <- function(dir, basename) {
     filenames <- paste.path(dir, paste0(c("", "KORR_"), basename))
     x <- read.mon.complete(filenames[1], dec = "auto")
@@ -86,10 +88,12 @@ fix.baro.overlap <- function(baro.df) {
   baro.df[i, ]
 }
 
-baro.data <- Compose(fix.baro.overlap, join.data,
-                     Curry(read.mons, dec = "auto"))(baro.all.files)
+if (do.readdata) {
+  baro.data <- Compose(fix.baro.overlap, join.data,
+                       Curry(read.mons, dec = "auto"))(baro.all.files)
 
-baro.zoo <- zoo(baro.data$h, baro.data$t)
+  baro.zoo <- zoo(baro.data$h, baro.data$t)
+}
 
 
 ## Diver timeseries
@@ -133,21 +137,22 @@ diver.files <- lapply(
   FUN = build.filenames)
 
 
-diver.data <- lapply(diver.files,
-                     Compose(join.data,
-                             Curry(read.mons, dec = "auto")))
-
-diver.zoo <- lapply(diver.data,
-                    Compose(out.of.water.as.NA,
-                            function(x) zoo(x$h, x$t)))
+if (do.readdata) {
+  diver.data <- lapply(diver.files,
+                       Compose(join.data,
+                               Curry(read.mons, dec = "auto")))
+  diver.zoo <- lapply(diver.data,
+                      Compose(out.of.water.as.NA,
+                              function(x) zoo(x$h, x$t)))
+}
 
 
 ### Baro-compensation (only zoo)
 
-wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
-
-wc <- do.call(merge, wat.col)
-
+if (do.compensation) {
+  wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
+  wc <- do.call(merge, wat.col)
+}
 
 ## tests for working with logger geometry
 
@@ -157,6 +162,6 @@ l205 <- zoo(as.matrix(diver.geometry[diver.geometry$loc == "GW-WAS-205", c("h.0"
             diver.geometry[diver.geometry$loc == "GW-WAS-205", "t"])
 x <- merge(wat.col$was205, l205)
 y <- na.locf(x[, c("h.0", "l")])
-z <- merge(wat.col$was205, y)
+z <- merge(wat.col$was205, y, all = c(TRUE, FALSE))
 colnames(z) <- c("wc", "h.0", "l")
 z$h <- with(z, h.0 - l + wc)
