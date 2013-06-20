@@ -164,4 +164,5 @@ x <- merge(wat.col$was205, l205)
 y <- na.locf(x[, c("h.0", "l")])
 z <- merge(wat.col$was205, y, all = c(TRUE, FALSE))
 colnames(z) <- c("wc", "h.0", "l")
-z$h <- with(z, h.0 - l + wc)
+z$h <- with(z, h.0 - l + wc/100)
+
