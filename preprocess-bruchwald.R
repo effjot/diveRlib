@@ -15,13 +15,28 @@ Compose <- function (...) {             # redefine for
 
 ### Setup
 
+Sys.setenv(TZ="Etc/GMT-1")
+
+base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
+
+
+## do or skip time-consuming parts
+
 do.fixfiles <- FALSE
 do.readdata <- FALSE
 do.compensation <- FALSE
 
-Sys.setenv(TZ="Etc/GMT-1")
 
-base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
+## correspondence between abbreviated and full names
+
+location.numbers <- c(205, 206, 209, 210, 212, 213, 216, 220, 224)
+location.fullnames <- c(paste0("GW-WAS-", location.numbers),
+                             "LP-BRW-5OP", "Baro")
+location.shortnames <- c(paste0("was", location.numbers),
+                               "lp5ow", "baro")
+location.names <- data.frame(shortname = location.shortnames,
+                             fullname = location.fullnames)
+rm(location.numbers)
 
 
 ### Korrektur Zeitversatz (irrtümlich Sommerzeit)
@@ -154,9 +169,20 @@ if (do.compensation) {
   wc <- do.call(merge, wat.col)
 }
 
-## tests for working with logger geometry
 
-diver.geometry <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv")
+### Calculate absolute heads
+
+## read records of geometry data
+diver.geometry <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "m")
+
+## add locations' fullnames; shortnames go into loc
+diver.geometry <- transform(
+  merge(diver.geometry, location.names,
+        by.x = "loc" , by.y = "fullname", all.x = TRUE, all.y = FALSE),
+  fullname = loc, loc = shortname, shortname = NULL)
+
+
+## tests for working with logger geometry
 
 l205 <- zoo(as.matrix(diver.geometry[diver.geometry$loc == "GW-WAS-205", c("h.0", "l")]),
             diver.geometry[diver.geometry$loc == "GW-WAS-205", "t"])
@@ -166,3 +192,4 @@ z <- merge(wat.col$was205, y, all = c(TRUE, FALSE))
 colnames(z) <- c("wc", "h.0", "l")
 z$h <- with(z, h.0 - l + wc/100)
 
+h205 <- calc.abs.head("was205", wat.col,diver.geometry)

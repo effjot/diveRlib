@@ -262,8 +262,22 @@ read.diver.geometry <- function(filename,
                                format = paste(date.format, time.format)))
   if (unit == "cm")
     geo <- transform(geo, l = l/100, h.0 = h.0/100)
-  
+
   geo[c("loc", "t", "h.0", "l")]
+}
+
+
+## Calculate absolute head (water level) from water column and logger geometry (both as list of all zoos / all dataframes)
+calc.abs.head <- function(loc, all.wc, all.geo) {
+  wc <- all.wc[[loc]]
+  geo <- zoo(as.matrix(all.geo[all.geo$loc == loc, c("h.0", "l")]),
+             all.geo[all.geo$loc == loc, "t"])
+  merged.full <- merge(wc, geo)
+  # na.locf only on the geometry columns, to protect NAs in logger data
+  merged.geo.filled <- na.locf(merged.full[, c("h.0", "l")])
+  # logger data with geometry only at logged times
+  complete <- merge(wc, merged.geo.filled, all = c(TRUE, FALSE))
+  transform(complete, h = h.0 - l + wc)
 }
 
 
