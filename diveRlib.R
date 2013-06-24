@@ -30,7 +30,7 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
-                              dec = ".") {
+                              dec = ".", unit = "convert") {
 
   ## select decimal separator
   ## FIXME: this should be more clever and robust, i.e. look into the file;
@@ -40,7 +40,7 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
               "," else "."
   }
 
-  cat("Reading ", filename, " with dec=", dec, "\n", sep = "")
+  cat("Reading ", filename, " with dec=", dec, sep = "")
 
   ## read and parse header sections
   header <- readLines(filename, n = mon.max.header.lines)
@@ -63,6 +63,20 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
   data$t <- as.POSIXct(strptime(paste(data$date, data$time),
                                 format = mon.data.datetime.format,
                                 tz = mon.timezone))
+
+  ## convert to metres, if necessary
+  if (unit == "convert") {
+    u <- extract.units(hdr)
+    unit <- u[u$param == "wc", "unit"]
+  }
+  wc.factor <- switch(unit,
+                      keep = 1,
+                      m = 1,
+                      cm = 0.01,
+                      NULL)
+  if (is.null(wc.factor)) stop("Unknown unit for water column: ", unit)
+  cat(" unit=", unit, "\n", sep = "")
+  data <- transform(data, h = wc.factor * h)
 
   list(loc = loc, comp = comp, data = data[, c("t", "h", "temp")],
        hdr = hdr, unparsed.header = header)
@@ -502,7 +516,7 @@ daylightsaving.to.standard.time <- function(df, t.col = "t") {
 ## value, which should work if the water colum above to logger wasn't
 ## too small.  It is also possible to supply a vector, e.g. baro
 ## logger values, to compare to.
-remove.out.of.water <- function(df, h.min = 1060, h.col = "h") {
+remove.out.of.water <- function(df, h.min = 10.60, h.col = "h") {
   first.in.water <- which(df[h.col] > h.min)[1]
   df[first.in.water:nrow(df), ]
 }
@@ -513,18 +527,18 @@ remove.out.of.water <- function(df, h.min = 1060, h.col = "h") {
 ## equal than the threshold is assumed out of water.  Has S3 methods
 ## for data.frame and zoo
 
-out.of.water.as.NA <- function(x, h.min = 1060, ...) {
+out.of.water.as.NA <- function(x, h.min = 10.60, ...) {
     class(x) <- data.class(x)
     UseMethod("out.of.water.as.NA", x)
 }
 
-out.of.water.as.NA.data.frame <- function(x, h.min = 1060, h.col = "h") {
+out.of.water.as.NA.data.frame <- function(x, h.min = 10.60, h.col = "h") {
   out.of.water <- which(x[h.col] <= h.min)
   x[out.of.water, h.col] <- NA
   x
 }
 
-out.of.water.as.NA.zoo <- function(x, h.min = 1060) {
+out.of.water.as.NA.zoo <- function(x, h.min = 10.60) {
   out.of.water <- which(x <= h.min)
   x[out.of.water] <- NA
   x
