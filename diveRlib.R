@@ -150,15 +150,15 @@ parse.header <- function(unparsed.header) {
 ## Get units of all channels from the "Series settings" part of the
 ## parsed header
 extract.units <- function(header) {
-  channel.info <- x$hdr[paste(
+  channel.info <- header[paste(
     "Channel",
-    1:as.integer(x$hdr$`Logger settings`$`Number of channels`),
+    1:as.integer(header$`Logger settings`$`Number of channels`),
     "from data header")]
 
   x <- lapply(channel.info,
               FUN = function(ch) {
-                if (grepl("pegel|pressure", ch$Identification,
-                          ignore.case = TRUE)) {
+                if (grepl("pegel|wasserstand|pressure|level",
+                          ch$Identification, ignore.case = TRUE)) {
                   c("wc", last(strsplit(ch$`Reference level`, " ")[[1]]))
                 } else if (grepl("temperatur", ch$Identification,
                                  ignore.case = TRUE)) {
@@ -167,7 +167,7 @@ extract.units <- function(header) {
                   NULL
               })
 
-  data.frame(row.names = paste("Channel", 1:length(u)),
+  data.frame(row.names = paste("Channel", 1:length(x)),
              param = sapply(x, FUN = first),
              unit = sapply(x, FUN = last),
              stringsAsFactors = FALSE)
