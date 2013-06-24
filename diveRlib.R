@@ -275,6 +275,10 @@ between <- function(i, range) {
   i >= range[1] & i <= range[2]
 }
 
+first <- function(x) {
+  head(x, 1)
+}
+
 last <- function(x) {
   tail(x, 1)
 }
