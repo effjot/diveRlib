@@ -31,6 +31,15 @@ Import into Diver Office with logger/location already in database, new Location 
 => Import into existing location as new dataset
 
 
+"Identification" of channels: in my files I found (find . -type f -exec fgrep Identifi {} \; | cut -d = -f 2 | sort | uniq) the following terms for the water level channel:
+
+ * Baropegel
+ * LEVEL
+ * Pegel
+ * PRESSURE
+ * Wasserstand
+
+
 
 Backup files
 ------------
