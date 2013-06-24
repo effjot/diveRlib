@@ -155,17 +155,22 @@ extract.units <- function(header) {
     1:as.integer(x$hdr$`Logger settings`$`Number of channels`),
     "from data header")]
 
-  lapply(channel.info,
-         FUN = function(ch) {
-           if (grepl("pegel|pressure", ch$Identification,
-                     ignore.case = TRUE)) {
-             c("wc", last(strsplit(ch$`Reference level`, " ")[[1]]))
-           } else if (grepl("temperatur", ch$Identification,
-                     ignore.case = TRUE)) {
-             c("temp", last(strsplit(ch$`Reference level`, " ")[[1]]))
-           } else
-             NULL
-         })
+  x <- lapply(channel.info,
+              FUN = function(ch) {
+                if (grepl("pegel|pressure", ch$Identification,
+                          ignore.case = TRUE)) {
+                  c("wc", last(strsplit(ch$`Reference level`, " ")[[1]]))
+                } else if (grepl("temperatur", ch$Identification,
+                                 ignore.case = TRUE)) {
+                  c("temp", last(strsplit(ch$`Reference level`, " ")[[1]]))
+                } else
+                  NULL
+              })
+
+  data.frame(row.names = paste("Channel", 1:length(u)),
+             param = sapply(u, FUN = first),
+             unit = sapply(u, FUN = last),
+             stringsAsFactors = FALSE)
 }
 
 
