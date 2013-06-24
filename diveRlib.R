@@ -168,8 +168,8 @@ extract.units <- function(header) {
               })
 
   data.frame(row.names = paste("Channel", 1:length(u)),
-             param = sapply(u, FUN = first),
-             unit = sapply(u, FUN = last),
+             param = sapply(x, FUN = first),
+             unit = sapply(x, FUN = last),
              stringsAsFactors = FALSE)
 }
 
