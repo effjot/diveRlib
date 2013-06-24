@@ -147,6 +147,28 @@ parse.header <- function(unparsed.header) {
 }
 
 
+## Get units of all channels from the "Series settings" part of the
+## parsed header
+extract.units <- function(header) {
+  channel.info <- x$hdr[paste(
+    "Channel",
+    1:as.integer(x$hdr$`Logger settings`$`Number of channels`),
+    "from data header")]
+
+  lapply(channel.info,
+         FUN = function(ch) {
+           if (grepl("pegel|pressure", ch$Identification,
+                     ignore.case = TRUE)) {
+             c("wc", last(strsplit(ch$`Reference level`, " ")[[1]]))
+           } else if (grepl("temperatur", ch$Identification,
+                     ignore.case = TRUE)) {
+             c("temp", last(strsplit(ch$`Reference level`, " ")[[1]]))
+           } else
+             NULL
+         })
+}
+
+
 ## Take complete MON data structure, updates header fields "Start
 ## date", "End date" and FILEINFO section.  Returns only the updated
 ## header structure, so you can feed the return value directly to
