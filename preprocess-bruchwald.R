@@ -23,8 +23,8 @@ base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
 ## do or skip time-consuming parts
 
 do.fixfiles <- FALSE
-do.readdata <- FALSE
-do.compensation <- FALSE
+do.readdata <- TRUE
+do.compensation <- TRUE
 
 
 ## correspondence between abbreviated and full names
@@ -146,7 +146,7 @@ diver.files <- lapply(
          "2013-02-23", "gw-was-224_130225125118_G0181",
          "2013-03-25+26", "GW-WAS-224",
          "2013-05-17", "GW-WAS-224^G0181^13-05-17 16-13-21"),
-       lp5 = c("2013-03-25+26", "KORR_LP-BRW-5OP",
+       lp5ow = c("2013-03-25+26", "KORR_LP-BRW-5OP",
          "2013-05-03", "LP-BRW-5OP^75779^13-05-03 14-34-29")
   ),
   FUN = build.filenames)
@@ -173,23 +173,22 @@ if (do.compensation) {
 ### Calculate absolute heads
 
 ## read records of geometry data
-diver.geometry <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "m")
+diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "m")
 
 ## add locations' fullnames; shortnames go into loc
-diver.geometry <- transform(
-  merge(diver.geometry, location.names,
+diver.geometry.complete <- transform(
+  merge(diver.geometry.complete, location.names,
         by.x = "loc" , by.y = "fullname", all.x = TRUE, all.y = FALSE),
-  fullname = loc, loc = shortname, shortname = NULL)
+  fullname = loc, loc = as.character(shortname), shortname = NULL)
 
+## split into list of dataframes (for each location), without baro
+diver.geometry <- split(diver.geometry.complete,
+                        ifelse(diver.geometry.complete$loc == "baro",
+                               NA, diver.geometry.complete$loc))
 
-## tests for working with logger geometry
+## calculate heads for all divers
+wat.head <- mapply(calc.abs.head, wat.col,
+                   diver.geometry[names(wat.col)]) # ensure same ordering
 
-l205 <- zoo(as.matrix(diver.geometry[diver.geometry$loc == "GW-WAS-205", c("h.0", "l")]),
-            diver.geometry[diver.geometry$loc == "GW-WAS-205", "t"])
-x <- merge(wat.col$was205, l205)
-y <- na.locf(x[, c("h.0", "l")])
-z <- merge(wat.col$was205, y, all = c(TRUE, FALSE))
-colnames(z) <- c("wc", "h.0", "l")
-z$h <- with(z, h.0 - l + wc/100)
-
-h205 <- calc.abs.head("was205", wat.col,diver.geometry)
+## zoo of heads only (drop water column and geometry)
+h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
