@@ -30,7 +30,7 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 ## Read a single MON file, return a list with header as text lines and
 ## data with timestamps converted to POSIXct type
 read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
-                              dec = ".", unit = "convert") {
+                              dec = ".", unit = "auto") {
 
   ## select decimal separator
   ## FIXME: this should be more clever and robust, i.e. look into the file;
@@ -65,7 +65,7 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
                                 tz = mon.timezone))
 
   ## convert to metres, if necessary
-  if (unit == "convert") {
+  if (unit == "auto") {
     u <- extract.units(hdr)
     unit <- u[u$param == "wc", "unit"]
   }
