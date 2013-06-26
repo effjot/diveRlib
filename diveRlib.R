@@ -288,6 +288,41 @@ join.data <- function(dataframes) {
 }
 
 
+## Read diver geometry (installation depths etc.) from Excel-exported CSV
+read.diver.geometry <- function(filename,
+                                col.names = c("loc", "date", "time",
+                                  "l", "h.0", "serial", "comment"),
+                                date.format = "%d.%m.%Y",
+                                time.format = "%H:%M",
+                                unit = "cm") {
+  stopifnot(c("loc", "date", "time", "l", "h.0") %in% col.names)
+  stopifnot(unit %in% c("cm", "m"))
+  geo <- read.csv2(filename, as.is = TRUE, col.names = col.names)
+  geo$t <- as.POSIXct(strptime(paste(geo$date, geo$time),
+                               format = paste(date.format, time.format)))
+  if (unit == "cm")
+    geo <- transform(geo, l = l/100, h.0 = h.0/100)
+
+  geo[c("loc", "t", "h.0", "l")]
+}
+
+
+## Calculate absolute head (water level) from water column and logger geometry (both as list of all zoos / all dataframes)
+calc.abs.head <- function(wc, geometry) {
+#  wc <- all.wc[[loc]]
+#  geo <- zoo(as.matrix(all.geo[all.geo$loc == loc, c("h.0", "l")]),
+#             all.geo[all.geo$loc == loc, "t"])
+  geo <- zoo(geometry[c("h.0", "l")], geometry$t)
+  merged.full <- merge(wc, geo)
+  # na.locf only on the geometry columns, to protect NAs in logger data
+  merged.geo.filled <- na.locf(merged.full[, c("h.0", "l")])
+  # logger data with geometry only at logged times
+  complete <- merge(wc, merged.geo.filled, all = c(TRUE, FALSE))
+  transform(complete, h = h.0 - l + wc)
+}
+
+
+
 ### General
 
 between <- function(i, range) {
@@ -464,7 +499,7 @@ plot.axis.grid.years <- function(t.range, short.month.labels = TRUE,
 #                    t.range[2] - 182.6*86400, by = "years")
     year <- as.POSIXlt(t.range)$year + 1900
 
-#### Hack für Juli 2010    year[2] <- year[2]+1
+## Hack für Juli 2010    year[2] <- year[2]+1
 
     year.seq <- seq(ISOdate(year[1] - 1, 1, 1),
                     ISOdate(year[2] + 1, 1, 1), by = "years")
@@ -556,7 +591,7 @@ fill.gaps.zoo <- function(x, FUN = na.approx) {
 }
 
 
-### Barometric compensation
+### Barometric compensation and water level calculation
 
 ## Constants and utilities
 

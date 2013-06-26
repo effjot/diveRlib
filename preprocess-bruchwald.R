@@ -13,18 +13,35 @@ Compose <- function (...) {             # redefine for
 }
 
 
+### Setup
+
 Sys.setenv(TZ="Etc/GMT-1")
-
-
-### Verzeichnis
 
 base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
 
 
+## do or skip time-consuming parts
+
+do.fixfiles <- FALSE
+do.readdata <- TRUE
+do.compensation <- TRUE
+
+
+## correspondence between abbreviated and full names
+
+location.numbers <- c(205, 206, 209, 210, 212, 213, 216, 220, 224)
+location.fullnames <- c(paste0("GW-WAS-", location.numbers),
+                             "LP-BRW-5OP", "Baro")
+location.shortnames <- c(paste0("was", location.numbers),
+                               "lp5ow", "baro")
+location.names <- data.frame(shortname = location.shortnames,
+                             fullname = location.fullnames)
+rm(location.numbers)
+
+
 ### Korrektur Zeitversatz (irrtümlich Sommerzeit)
 
-do.fix <- FALSE
-if (do.fix) {
+if (do.fixfiles) {
   fix.file <- function(dir, basename) {
     filenames <- paste.path(dir, paste0(c("", "KORR_"), basename))
     x <- read.mon.complete(filenames[1], dec = "auto")
@@ -86,10 +103,12 @@ fix.baro.overlap <- function(baro.df) {
   baro.df[i, ]
 }
 
-baro.data <- Compose(fix.baro.overlap, join.data,
-                     Curry(read.mons, dec = "auto"))(baro.all.files)
+if (do.readdata) {
+  baro.data <- Compose(fix.baro.overlap, join.data,
+                       Curry(read.mons, dec = "auto"))(baro.all.files)
 
-baro.zoo <- zoo(baro.data$h, baro.data$t)
+  baro.zoo <- zoo(baro.data$h, baro.data$t)
+}
 
 
 ## Diver timeseries
@@ -127,23 +146,49 @@ diver.files <- lapply(
          "2013-02-23", "gw-was-224_130225125118_G0181",
          "2013-03-25+26", "GW-WAS-224",
          "2013-05-17", "GW-WAS-224^G0181^13-05-17 16-13-21"),
-       lp5 = c("2013-03-25+26", "KORR_LP-BRW-5OP",
+       lp5ow = c("2013-03-25+26", "KORR_LP-BRW-5OP",
          "2013-05-03", "LP-BRW-5OP^75779^13-05-03 14-34-29")
   ),
   FUN = build.filenames)
 
 
-diver.data <- lapply(diver.files,
-                     Compose(join.data,
-                             Curry(read.mons, dec = "auto")))
-
-diver.zoo <- lapply(diver.data,
-                    Compose(out.of.water.as.NA,
-                            function(x) zoo(x$h, x$t)))
+if (do.readdata) {
+  diver.data <- lapply(diver.files,
+                       Compose(join.data,
+                               Curry(read.mons, dec = "auto")))
+  diver.zoo <- lapply(diver.data,
+                      Compose(out.of.water.as.NA,
+                              function(x) zoo(x$h, x$t)))
+}
 
 
 ### Baro-compensation (only zoo)
 
-wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
+if (do.compensation) {
+  wat.col <- lapply(diver.zoo, Curry(baro.comp, baro = baro.zoo))
+  wc <- do.call(merge, wat.col)
+}
 
-wc <- do.call(merge, wat.col)
+
+### Calculate absolute heads
+
+## read records of geometry data
+diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "m")
+
+## add locations' fullnames; shortnames go into loc
+diver.geometry.complete <- transform(
+  merge(diver.geometry.complete, location.names,
+        by.x = "loc" , by.y = "fullname", all.x = TRUE, all.y = FALSE),
+  fullname = loc, loc = as.character(shortname), shortname = NULL)
+
+## split into list of dataframes (for each location), without baro
+diver.geometry <- split(diver.geometry.complete,
+                        ifelse(diver.geometry.complete$loc == "baro",
+                               NA, diver.geometry.complete$loc))
+
+## calculate heads for all divers
+wat.head <- mapply(calc.abs.head, wat.col,
+                   diver.geometry[names(wat.col)]) # ensure same ordering
+
+## zoo of heads only (drop water column and geometry)
+h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
