@@ -173,7 +173,7 @@ if (do.compensation) {
 ### Calculate absolute heads
 
 ## read records of geometry data
-diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "m")
+diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "cm")
 
 ## add locations' fullnames; shortnames go into loc
 diver.geometry.complete <- transform(
