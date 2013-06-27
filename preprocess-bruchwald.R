@@ -187,7 +187,8 @@ diver.geometry <- split(diver.geometry.complete,
                                NA, diver.geometry.complete$loc))
 
 ## calculate heads for all divers
-wat.head <- mapply(calc.abs.head, wat.col,
+wat.head <- mapply(Curry(calc.abs.head, cutoff = 0.5),
+                   wat.col,
                    diver.geometry[names(wat.col)]) # ensure same ordering
 
 ## zoo of heads only (drop water column and geometry)

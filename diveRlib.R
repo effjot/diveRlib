@@ -308,17 +308,19 @@ read.diver.geometry <- function(filename,
 
 
 ## Calculate absolute head (water level) from water column and logger geometry (both as list of all zoos / all dataframes)
-calc.abs.head <- function(wc, geometry) {
-#  wc <- all.wc[[loc]]
-#  geo <- zoo(as.matrix(all.geo[all.geo$loc == loc, c("h.0", "l")]),
-#             all.geo[all.geo$loc == loc, "t"])
+calc.abs.head <- function(wc, geometry, cutoff = FALSE) {
   geo <- zoo(geometry[c("h.0", "l")], geometry$t)
   merged.full <- merge(wc, geo)
   # na.locf only on the geometry columns, to protect NAs in logger data
   merged.geo.filled <- na.locf(merged.full[, c("h.0", "l")])
   # logger data with geometry only at logged times
-  complete <- merge(wc, merged.geo.filled, all = c(TRUE, FALSE))
-  transform(complete, h = h.0 - l + wc)
+  z <- merge(wc, merged.geo.filled, all = c(TRUE, FALSE))
+  if (cutoff) {  # can't use transform, as it doesn't see cutoff variable
+    z$h <- ifelse.zoo(z$wc < (z$l - cutoff), z$h.0 - z$l + z$wc, NA)
+  } else {
+    z$h <- z$h.0 - z$l + z$wc
+  }
+  z
 }
 
 
