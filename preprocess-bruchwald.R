@@ -159,6 +159,8 @@ if (do.readdata) {
   diver.zoo <- lapply(diver.data,
                       Compose(out.of.water.as.NA,
                               function(x) zoo(x$h, x$t)))
+  temp.zoo <- lapply(diver.data,
+                     function(x) zoo(x$temp, x$t))
 }
 
 
@@ -193,3 +195,9 @@ wat.head <- mapply(Curry(calc.abs.head, cutoff = 0.5),
 
 ## zoo of heads only (drop water column and geometry)
 h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
+
+
+man216 <- zoo(c(37.10, 37.05, 37.26, 37.20, 37.08, 37.03, 36.94, 36.91),
+              ISOdatetime(2012, c(6, 6, 7, 7, 7, 8, 9, 9),
+                          c(2, 16, 10, 12, 28, 11, 9, 22),
+                          12, 00, 00))
