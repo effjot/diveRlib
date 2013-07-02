@@ -23,9 +23,9 @@ base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
 ## do or skip time-consuming parts
 
 do.fixfiles <- FALSE
-do.readdata <- TRUE
-do.compensation <- TRUE
-
+do.readdata <- FALSE
+do.compensation <- FALSE
+do.abs.heads <- TRUE
 
 ## correspondence between abbreviated and full names
 
@@ -174,27 +174,32 @@ if (do.compensation) {
 
 ### Calculate absolute heads
 
-## read records of geometry data
-diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "cm")
+if (do.abs.heads) {
 
-## add locations' fullnames; shortnames go into loc
-diver.geometry.complete <- transform(
-  merge(diver.geometry.complete, location.names,
-        by.x = "loc" , by.y = "fullname", all.x = TRUE, all.y = FALSE),
-  fullname = loc, loc = as.character(shortname), shortname = NULL)
+  ## read records of geometry data
+  diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "cm")
 
-## split into list of dataframes (for each location), without baro
-diver.geometry <- split(diver.geometry.complete,
-                        ifelse(diver.geometry.complete$loc == "baro",
-                               NA, diver.geometry.complete$loc))
+  ## add locations' fullnames; shortnames go into loc
+  diver.geometry.complete <- transform(
+    merge(diver.geometry.complete, location.names,
+          by.x = "loc" , by.y = "fullname", all.x = TRUE, all.y = FALSE),
+    fullname = loc, loc = as.character(shortname), shortname = NULL)
 
-## calculate heads for all divers
-wat.head <- mapply(Curry(calc.abs.head, cutoff = 0.5),
-                   wat.col,
-                   diver.geometry[names(wat.col)]) # ensure same ordering
+  ## split into list of dataframes (for each location), without baro
+  diver.geometry <- split(diver.geometry.complete,
+                          ifelse(diver.geometry.complete$loc == "baro",
+                                 NA, diver.geometry.complete$loc))
 
-## zoo of heads only (drop water column and geometry)
-h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
+  ## calculate heads for all divers
+  wat.head <- mapply(FUN = calc.abs.head,
+                     wat.col,
+                     diver.geometry[names(wat.col)], # ensure same ordering
+                     MoreArgs = list(cutoff = 0.5))
+
+  ## zoo of heads only (drop water column and geometry)
+  h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
+
+}
 
 
 man216 <- zoo(c(37.10, 37.05, 37.26, 37.20, 37.08, 37.03, 36.94, 36.91),
