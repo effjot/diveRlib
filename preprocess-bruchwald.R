@@ -26,6 +26,7 @@ do.fixfiles <- FALSE
 do.readdata <- FALSE
 do.compensation <- FALSE
 do.abs.heads <- TRUE
+do.clean <- TRUE
 
 ## correspondence between abbreviated and full names
 
@@ -202,7 +203,27 @@ if (do.abs.heads) {
 }
 
 
-man216 <- zoo(c(37.10, 37.05, 37.26, 37.20, 37.08, 37.03, 36.94, 36.91),
-              ISOdatetime(2012, c(6, 6, 7, 7, 7, 8, 9, 9),
-                          c(2, 16, 10, 12, 28, 11, 9, 22),
-                          12, 00, 00))
+### Cleanup, outliers, faulty data
+
+if (do.clean) {
+
+## GW-WAS-216: water level suddenly shifted up for some time
+  start <- ISOdatetime(2012, 7, 12, 12, 30, 00)
+  end   <- ISOdatetime(2012, 9,  9, 14, 30, 00)
+  offsets <- zoo(c(1.007, 0.775), c(start, end))
+  corr <- merge(window(wat.head$was216, start = start, end = end),
+                offsets)
+  corr$offsets <- na.approx(corr$offsets)
+  corr$wc <- corr$wc - corr$offsets
+  corr$h  <- corr$h  - corr$offsets
+  window(wat.head$was216, start = start, end = end)[, c("wc", "h")] <-
+    corr[, c("wc", "h")]
+
+  # some manual measurments for comparison
+  man216 <- zoo(c(37.10, 37.05, 37.26, 37.20, 37.08, 37.03, 36.94, 36.91),
+                ISOdatetime(2012, c(6, 6, 7, 7, 7, 8, 9, 9),
+                            c(2, 16, 10, 12, 28, 11, 9, 22),
+                            12, 00, 00))
+
+}
+
