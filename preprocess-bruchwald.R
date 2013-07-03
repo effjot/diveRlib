@@ -23,8 +23,8 @@ base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
 ## do or skip time-consuming parts
 
 do.fixfiles <- FALSE
-do.readdata <- FALSE
-do.compensation <- FALSE
+do.readdata <- TRUE
+do.compensation <- TRUE
 do.abs.heads <- TRUE
 do.clean <- TRUE
 
@@ -207,7 +207,8 @@ if (do.abs.heads) {
 
 if (do.clean) {
 
-## GW-WAS-216: water level suddenly shifted up for some time
+  ## GW-WAS-216
+  # water level suddenly shifted up for some time
   start <- ISOdatetime(2012, 7, 12, 12, 30, 00)
   end   <- ISOdatetime(2012, 9,  9, 14, 30, 00)
   offsets <- zoo(c(1.007, 0.775), c(start, end))
@@ -218,6 +219,17 @@ if (do.clean) {
   corr$h  <- corr$h  - corr$offsets
   window(wat.head$was216, start = start, end = end)[, c("wc", "h")] <-
     corr[, c("wc", "h")]
+
+  # series of spikes to extreme values
+  wat.head$was216 <- set.range.to.NA(wat.head$was216,
+                                     c(ISOdatetime(2012,  9, 14, 10, 30, 00),
+                                       ISOdatetime(2012,  9, 16, 20, 15, 00)))
+  wat.head$was216 <- set.range.to.NA(wat.head$was216,
+                                     c(ISOdatetime(2012,  9, 24,  0, 15, 00),
+                                       ISOdatetime(2012, 11,  7, 15, 45, 00)))
+  wat.head$was216 <- set.range.to.NA(wat.head$was216,
+                                     c(ISOdatetime(2012, 11, 13, 19, 00, 00),
+                                       ISOdatetime(2012, 11, 17,  3, 30, 00)))
 
   # some manual measurments for comparison
   man216 <- zoo(c(37.10, 37.05, 37.26, 37.20, 37.08, 37.03, 36.94, 36.91),
