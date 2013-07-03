@@ -593,6 +593,15 @@ fill.gaps.zoo <- function(x, FUN = na.approx) {
 }
 
 
+## Set values within time range to NA
+set.range.to.NA <- function(x, t.range, cols = c("wc", "h"), na.value = NA) {
+  stopifnot(length(t.range) == 2)
+  window(x, start = t.range[1], end = t.range[2])[, cols] <-
+    rep(na.value, length(cols))
+  x
+}
+
+
 ### Barometric compensation and water level calculation
 
 ## Constants and utilities
