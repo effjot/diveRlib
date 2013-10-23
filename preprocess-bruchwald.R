@@ -175,7 +175,7 @@ if (do.compensation) {
 }
 
 
-### Calculate absolute heads
+### Calculate absolute heads (".uncl" = unclean = no outliers etc. fixed)
 
 if (do.abs.heads) {
 
@@ -194,13 +194,13 @@ if (do.abs.heads) {
                                  NA, diver.geometry.complete$loc))
 
   ## calculate heads for all divers
-  wat.head <- mapply(FUN = calc.abs.head,
-                     wat.col,
-                     diver.geometry[names(wat.col)], # ensure same ordering
-                     MoreArgs = list(cutoff = 0.5))
+  wat.head.uncl <- mapply(FUN = calc.abs.head, wat.col,
+                          diver.geometry[names(wat.col)], # ensure
+                                                   # same ordering
+                          MoreArgs = list(cutoff = 0.5))
 
   ## zoo of heads only (drop water column and geometry)
-  h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
+  h.uncl <- do.call(merge, lapply(wat.head.uncl, function(l) { l$h }))
 
 }
 
@@ -209,12 +209,15 @@ if (do.abs.heads) {
 
 if (do.clean) {
 
+  wat.head <- wat.head.uncl
+
   ## GW-WAS-216
+
   # water level suddenly shifted up for some time
   start <- ISOdatetime(2012, 7, 12, 12, 30, 00)
   end   <- ISOdatetime(2012, 9,  9, 14, 30, 00)
   offsets <- zoo(c(1.007, 0.775), c(start, end))
-  corr <- merge(window(wat.head$was216, start = start, end = end),
+  corr <- merge(window(wat.head.uncl$was216, start = start, end = end),
                 offsets)
   corr$offsets <- na.approx(corr$offsets)
   corr$wc <- corr$wc - corr$offsets
@@ -233,11 +236,13 @@ if (do.clean) {
                                      c(ISOdatetime(2012, 11, 13, 19, 00, 00),
                                        ISOdatetime(2012, 11, 17,  3, 30, 00)))
 
-  # some manual measurments for comparison
+  # some manual measurements for comparison
   man216 <- zoo(c(37.10, 37.05, 37.26, 37.20, 37.08, 37.03, 36.94, 36.91),
                 ISOdatetime(2012, c(6, 6, 7, 7, 7, 8, 9, 9),
                             c(2, 16, 10, 12, 28, 11, 9, 22),
                             12, 00, 00))
 
-}
+  ## zoo of corrected heads only (drop water column and geometry)
+  h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
 
+}
