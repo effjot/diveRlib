@@ -32,14 +32,6 @@ mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series set
 read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
                               dec = ".", unit = "auto") {
 
-  ## select decimal separator
-  ## FIXME: this should be more clever and robust, i.e. look into the file;
-  ##  currently checks for circumflex in the files taken from LDM backup dir
-  if (dec == "auto") {
-    dec <- if (grepl("^", filename, fixed = TRUE))
-              "," else "."
-  }
-
   cat("Reading ", filename, " with dec=", dec, sep = "")
 
   ## read and parse header sections
@@ -55,7 +47,14 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
   ## measurements compensated?
   comp <- hdr$FILEINFO$COMP.STATUS %in% c("Done", "Fertig", "Unvollst.")
 
+  ## get number format (decimal separator, units)
+  dec.and.units <- extract.dec.and.units(hdr)
+
   ## read data
+  if (dec == "auto") {
+    dec <- dec.and.units$dec[1]
+    cat(" (using ", dec, ")", sep = "")
+  }
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      dec = dec,
@@ -66,18 +65,16 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
 
   ## convert to metres, if necessary
   if (unit == "auto") {
-    u <- extract.units(hdr)
-    unit <- u[u$param == "wc", "unit"]
+    unit <- dec.and.units[dec.and.units$param == "wc", "unit"]
   }
   wc.factor <- switch(unit,
-                      keep = 1,
-                      m = 1,
+                      keep = 1.0,
+                      m = 1.0,
                       cm = 0.01,
                       NULL)
   if (is.null(wc.factor)) stop("Unknown unit for water column: ", unit)
   cat(" unit=", unit, "\n", sep = "")
-  data <- transform(data, h = wc.factor * h)
-
+  data$h <- wc.factor * data$h
   list(loc = loc, comp = comp, data = data[, c("t", "h", "temp")],
        hdr = hdr, unparsed.header = header)
 }
@@ -145,7 +142,7 @@ parse.header <- function(unparsed.header) {
   ## combine both parts, trim whitespace from keys and values (section
   ## is already trimmed)
   df <- data.frame(section = c(rep("FILEINFO", nrow(file.info) + 1),
-                                        # + 1 to generate empty row for section name
+                       # + 1 to generate empty row for section name
                      trim(li$section)),
                    key = trim(c("", file.info$key, li$key)),
                    val = trim(c("", file.info$val, li$val)),
@@ -163,7 +160,7 @@ parse.header <- function(unparsed.header) {
 
 ## Get units of all channels from the "Series settings" part of the
 ## parsed header
-extract.units <- function(header) {
+extract.dec.and.units <- function(header) {
   channel.info <- header[paste(
     "Channel",
     1:as.integer(header$`Logger settings`$`Number of channels`),
@@ -171,20 +168,29 @@ extract.units <- function(header) {
 
   x <- lapply(channel.info,
               FUN = function(ch) {
-                if (grepl("pegel|wasserstand|pressure|level",
-                          ch$Identification, ignore.case = TRUE)) {
-                  c("wc", last(strsplit(ch$`Reference level`, " ")[[1]]))
-                } else if (grepl("temperatur", ch$Identification,
-                                 ignore.case = TRUE)) {
-                  c("temp", last(strsplit(ch$`Reference level`, " ")[[1]]))
-                } else
-                  NULL
+                kind <-
+                  if (grepl("pegel|wasserstand|pressure|level",
+                            ch$Identification, ignore.case = TRUE)) {
+                    "wc"
+                  } else if (grepl("temperatur", ch$Identification,
+                                   ignore.case = TRUE)) {
+                    "temp"
+                  } else NULL
+                if (!is.null(kind)) {
+                  pieces <- strsplit(ch$`Reference level`, " +")
+                  dec <- if (grepl(".", pieces[1], fixed = TRUE))
+                    "." else ","
+                  c(kind, dec, last(pieces)[[1]])
+                } else NULL
               })
 
-  data.frame(row.names = paste("Channel", 1:length(x)),
-             param = sapply(x, FUN = first),
-             unit = sapply(x, FUN = last),
-             stringsAsFactors = FALSE)
+  df <- data.frame(row.names = paste("Channel", 1:length(x)),
+                   param = sapply(x, FUN = nth(1)),
+                   dec = sapply(x, FUN = nth(2)),
+                   unit = sapply(x, FUN = last),
+                   stringsAsFactors = FALSE)
+  stopifnot(length(unique(df$dec)) == 1) # different decimal separators
+  df
 }
 
 
@@ -236,10 +242,14 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
   nl(c(str.dup("=", 26), "    BEGINNING OF DATA     ", str.dup("=", 26)))
 
   ## logger info part, equal-sign-separated; write out predefined sections
+  ## ensure decimal separator is period in numbers
   lapply(mon.write.sections,
          FUN = function(sec) {
            nl(paste0("[", sec, "]"))
            df <- lst.to.df(header[[sec]])
+           i <- tolower(df$key) %in%    # fields with numbers
+                  c("range", "reference level", "master level", "altitude")
+           df[i, "val"] <- gsub(",", ".", df[i, "val"])
            df$key <- pad(df$key, 26)
            write.table(df, sep = "=", col.names = FALSE, row.names = FALSE,
               file = con, eol = mon.line.sep, quote = FALSE)
@@ -349,6 +359,10 @@ first.last <- function(x) {
   } else {
     c(head(x, 1), tail(x, 1))
   }
+}
+
+nth <- function(n) {
+  function(x) x[n]
 }
 
 even.numbered.elements <- function(v) {
