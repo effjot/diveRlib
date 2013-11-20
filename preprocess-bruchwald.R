@@ -40,6 +40,12 @@ location.names <- data.frame(shortname = location.shortnames,
 rm(location.numbers)
 
 
+## convenience
+
+quarter <- as.difftime("0:15:00") # one quarter hour time difference
+
+
+
 ### Korrektur Zeitversatz (irrtümlich Sommerzeit)
 
 if (do.fixfiles) {
@@ -135,6 +141,7 @@ diver.files <- lapply(
        was213 = c("2013-03-25+26", "KORR_GW-WAS-213",
          "2013-11-05+06", "GW-WAS-213^N0144^13-11-05 16-00-17"),
        was220 = c("2013-05-03", "KORR_GW-WAS-220^J5298^13-05-03 14-02-33",
+         "2013-09-11", "GW-WAS-220^J5298^13-09-11 14-53-15",
          "2013-11-05+06", "GW-WAS-220^J5298^13-11-06 14-26-07"),
        was216 = c("2011-07-13", "GW-WAS-216",
          "2011-10-21", "GW-WAS-216",
@@ -241,6 +248,21 @@ if (do.clean) {
                 ISOdatetime(2012, c(6, 6, 7, 7, 7, 8, 9, 9),
                             c(2, 16, 10, 12, 28, 11, 9, 22),
                             12, 00, 00))
+
+  ## GW-WAS-220
+
+  # times are offset by 7min 16s => interpolate for quarter hours
+  start <- ISOdatetime(2013,  9, 11, 13, 45, 00)
+  end   <- ISOdatetime(2013, 11,  6, 14, 25, 00)
+  regular.times <- seq(start, end, by = "15 min")
+  orig <- window(wat.head$was220, start = start, end = end)
+  interpol <- na.approx(orig, xout = regular.times, na.rm = FALSE)
+  before <- window(wat.head$was220, start = start(wat.head$was220),
+                   end = start - quarter)
+  after  <- window(wat.head$was220, start = end + quarter,
+                   end = end(wat.head$was220))
+  wat.head$was220 <- rbind(before, interpol, after)
+
 
   ## zoo of corrected heads only (drop water column and geometry)
   h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
