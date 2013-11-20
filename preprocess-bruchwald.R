@@ -101,9 +101,13 @@ baro.all.files <- build.filenames(c(
   "2012-07-12", "baro bruchwald uln_120713112829_K1941",
   "2013-02-23", "baro bruchwald uln_130225124744_K1941",
   "2013-03-25+26", "Baro Bruchwald ULN",
-  "2013-11-05+06", "Baro Bruchwald ULN^K1941^13-11-05 16-21-13"))
+  "2013-11-05+06", "Baro Bruchwald ULN^K1941^13-11-05 16-21-13",
+  "2013-11-07", "Baro Bruchwald ULN^K1941^13-11-07 14-55-17"))
 
-## Überlappung Parallelbetrieb während Loggerwechsel
+
+## When baro loggers had to be changed, for a time both loggers ran
+## parallel. Limit to data from only one device.
+
 fix.baro.overlap <- function(baro.df) {
   t.change <- which(baro.df$t == ISOdatetime(2011, 5, 5, 11, 45, 0))
   i <- c(1:t.change[1], (t.change[2]+1):nrow(baro.df))
