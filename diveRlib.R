@@ -335,6 +335,28 @@ calc.abs.head <- function(wc, geometry, cutoff = FALSE) {
 }
 
 
+## Read manual measurements (absolute water levels) from GeODin-exported CSV
+read.manual.meas <- function(filename,
+                             col.names = c("loc", "fullname",
+                               "elev", "borehole.depth", "invid", "invtype",
+                               "smpid", "smpname", "date", "time", "parsmpid",
+                               "geodinguid", "h"),
+                             date.format = "%d.%m.%Y",
+                             time.format = "%H:%M",
+                             unit = "m") {
+  stopifnot(c("loc", "date", "time", "h") %in% col.names)
+  stopifnot(unit %in% c("cm", "m"))
+  man <- read.csv(filename, as.is = TRUE, col.names = col.names)
+  man[man$time == "", "time"] <- "12:00"
+  man$t <- as.POSIXct(strptime(paste(man$date, man$time),
+                               format = paste(date.format, time.format)))
+  if (unit == "cm")
+    man$h <- man$h/100
+
+  man[c("loc", "t", "h")]
+}
+
+
 
 ### General
 
