@@ -308,6 +308,7 @@ read.diver.geometry <- function(filename,
   stopifnot(c("loc", "date", "time", "l", "h.0") %in% col.names)
   stopifnot(unit %in% c("cm", "m"))
   geo <- read.csv2(filename, as.is = TRUE, col.names = col.names)
+  geo[geo$time == "", "time"] <- "12:00"
   geo$t <- as.POSIXct(strptime(paste(geo$date, geo$time),
                                format = paste(date.format, time.format)))
   if (unit == "cm")
