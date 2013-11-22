@@ -24,9 +24,11 @@ base.dir <- "P:/2008_INKA-BB/Rohdaten/Datenlogger"
 
 do.fixfiles <- FALSE
 do.readdata <- TRUE
+do.read.manual.meas <- TRUE
 do.compensation <- TRUE
 do.abs.heads <- TRUE
 do.clean <- TRUE
+
 
 ## correspondence between abbreviated and full names
 
@@ -272,3 +274,33 @@ if (do.clean) {
   h <- do.call(merge, lapply(wat.head, function(l) { l$h }))
 
 }
+
+
+if (do.read.manual.meas) {
+
+  ## read manual measurements
+  manual.gw.complete <- read.manual.meas("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Handmessungen alle GWMS.csv")
+  manual.surf.complete <- read.manual.meas("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Handmessungen alle OWMS.csv")
+
+  ## add locations' fullnames; GW shortnames are in loc (but upper case)
+  man.gw <- manual.gw.complete
+  man.gw$loc = tolower(man.gw$loc)
+  man.gw <- merge(man.gw, location.names,
+                  by.x = "loc", by.y = "shortname", all.x = TRUE, all.y = FALSE)
+  man.gw$fullname <- as.character(man.gw$fullname)
+
+  man.surf <- merge(manual.surf.complete, location.names,
+                    by.x = "loc" , by.y = "fullname",
+                    all.x = TRUE, all.y = FALSE)
+  man.surf$fullname <- man.surf$loc
+  man.surf$loc <- as.character(man.surf$shortname)
+  man.surf$shortname <- NULL
+
+  manual.complete <- rbind(man.gw, man.surf)
+
+  manual <- split(manual.complete, manual.complete$loc)
+
+  man <- do.call(merge, lapply(manual,
+                               function(x) { zoo(x$h, x$t) }))
+}
+
