@@ -657,3 +657,14 @@ baro.comp <- function(w.raw, baro) {
   m <- merge(w.raw, b)
   m$w.raw - m$b
 }
+
+
+### Plotting
+
+## Compare logger and manually measured water levels
+plot.comparison <- function(loc, logger.zoo, manual.zoo, ...) {
+  plot(logger.zoo[, loc], col = "grey",
+       main = paste("Time series of logger data and manual measurements for",
+         loc), ...)
+  points(manual.zoo[, loc], col = "red", ...)
+}
