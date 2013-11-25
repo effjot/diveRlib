@@ -663,8 +663,25 @@ baro.comp <- function(w.raw, baro) {
 
 ## Compare logger and manually measured water levels
 plot.comparison <- function(loc, logger.zoo, manual.zoo, ...) {
-  plot(logger.zoo[, loc], col = "grey",
+  logger <- na.trim(logger.zoo[, loc])
+  plot(logger, xlim = c(start(logger), end(logger)),
+       col = "grey",
        main = paste("Time series of logger data and manual measurements for",
          loc), ...)
   points(manual.zoo[, loc], col = "red", ...)
+}
+
+## Correlation plot between logger and manual measurements
+plot.correlation <- function(loc, logger.zoo, manual.zoo,
+                             tolerance = 0.02, ...) {
+  merged <- na.omit(merge(logger = logger.zoo[, loc],
+                          man = manual.zoo[, loc], all = FALSE))
+  plot(merged$logger, merged$man,
+       main = paste("Logger data vs. manual measurements for", loc),
+       xlab = "Logger water levels", ylab = "Manual measurements",
+       ...)
+  abline(0, 1)
+  abline(+tolerance, 1, col = "grey")
+  abline(-tolerance, 1, col = "grey")
+  invisible(merged)
 }
