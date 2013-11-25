@@ -55,7 +55,7 @@ if (do.fixfiles) {
     filenames <- paste.path(dir, paste0(c("", "KORR_"), basename))
     x <- read.mon.complete(filenames[1], dec = "auto")
     x$data <- daylightsaving.to.standard.time(x$data)
-    x$data <- remove.out.of.water(x$data)
+    x$data <- trim.out.of.water(x$data)
     x$unparsed.header <- format.header(update.header(x, filenames[2]))
     write.mon.complete(filenames[2], x)
   }

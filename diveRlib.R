@@ -590,7 +590,7 @@ daylightsaving.to.standard.time <- function(df, t.col = "t") {
 ## value, which should work if the water colum above to logger wasn't
 ## too small.  It is also possible to supply a vector, e.g. baro
 ## logger values, to compare to.
-remove.out.of.water <- function(df, h.min = 10.60, h.col = "h") {
+trim.out.of.water <- function(df, h.min = 10.60, h.col = "h") {
   first.in.water <- which(df[h.col] > h.min)[1]
   df[first.in.water:nrow(df), ]
 }
