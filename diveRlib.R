@@ -130,6 +130,7 @@ parse.header <- function(unparsed.header) {
   ## then, the other lines are key=val pairs
   li[!li$is.sec.name, "key"] <- sub("^[[:blank:]]*([^=]+)=.+", "\\1",
                                     ini[!li$is.sec.name])
+  li$key <- gsub(" +", " ", li$key)     # remove repeated spaces
   li[!li$is.sec.name, "val"] <- sub("^[[:blank:]]*[^=]+=(.+)", "\\1",
                                     ini[!li$is.sec.name])
 
