@@ -47,23 +47,26 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
   ## measurements compensated?
   comp <- hdr$FILEINFO$COMP.STATUS %in% c("Done", "Fertig", "Unvollst.")
 
-  ## get number format (decimal separator, units)
+  ## get parameters and number format (decimal separator, units)
   dec.and.units <- extract.dec.and.units(hdr)
-
-  ## read data
   if (dec == "auto") {
     dec <- dec.and.units$dec[1]
     cat(" (using ", dec, ")", sep = "")
   }
+
+  data.cols <- dec.and.units$param
+  cat(", parameters", data.cols)
+
+  ## read data
   data <- read.table(filename, header = FALSE, skip = data.header.line + 1,
                      comment.char = "E", # skip last line "END OF DATA FILE"
                      dec = dec,
-                     col.names = c("date", "time", "h", "temp"))
+                     col.names = c("date", "time", data.cols))
   data$t <- as.POSIXct(strptime(paste(data$date, data$time),
                                 format = mon.data.datetime.format,
                                 tz = mon.timezone))
 
-  ## convert to metres, if necessary
+  ## convert water column to metres, if necessary
   if (unit == "auto") {
     unit <- dec.and.units[dec.and.units$param == "wc", "unit"]
   }
@@ -73,9 +76,9 @@ read.mon.complete <- function(filename, upcase.location = mon.upcase.location,
                       cm = 0.01,
                       NULL)
   if (is.null(wc.factor)) stop("Unknown unit for water column: ", unit)
-  cat(" unit=", unit, "\n", sep = "")
-  data$h <- wc.factor * data$h
-  list(loc = loc, comp = comp, data = data[, c("t", "h", "temp")],
+  cat(", unit=", unit, "\n", sep = "")
+  data$h <- wc.factor * data$wc
+  list(loc = loc, comp = comp, data = data[, c("t", data.cols, "h")],
        hdr = hdr, unparsed.header = header)
 }
 
@@ -176,6 +179,9 @@ extract.dec.and.units <- function(header) {
                   } else if (grepl("temperatur", ch$Identification,
                                    ignore.case = TRUE)) {
                     "temp"
+                  } else if (grepl("leitf|cond", ch$Identification,
+                                   ignore.case = TRUE)) {
+                    "cond"
                   } else NULL
                 if (!is.null(kind)) {
                   pieces <- strsplit(ch$`Reference level`, " +")
@@ -262,7 +268,10 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
 
 
 write.mon.complete <- function(filename, mon) {
-  df <- mon$data[c("h", "temp")]
+  has.cond <- "cond" %in% colnames(mon$data)
+
+  cols <-c("h", "temp", if (has.cond) "cond")
+  df <- mon$data[cols]
 
   ## format time and numbers for output
   op <- options(digits.secs = 1)
@@ -272,6 +281,9 @@ write.mon.complete <- function(filename, mon) {
   df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
                       width = 12, drop0trailing = FALSE)
   df$temp.fmt <- formatC(mon$data$temp, format="f", digits = 2,
+                         width = 11, drop0trailing = FALSE)
+  if (has.cond)
+    df$cond.fmt <- formatC(mon$data$cond, format="f", digits = 3,
                          width = 11, drop0trailing = FALSE)
 
   con <- file(filename, "wb")           # write binary to ensure CRLF newlines
@@ -284,9 +296,10 @@ write.mon.complete <- function(filename, mon) {
 
   nl(); nl()
   nl("[Data]"); nl(nrow(df))
-  write.table(df[c("t.fmt", "h.fmt", "temp.fmt")], sep = " ",
-              file = con, eol = mon.line.sep,
-               quote = FALSE, row.names = FALSE, col.names = FALSE)
+  write.table(df[c("t.fmt", "h.fmt", "temp.fmt",
+                   if (has.cond) "cond.fmt")],
+              sep = " ", file = con, eol = mon.line.sep,
+              quote = FALSE, row.names = FALSE, col.names = FALSE)
 
   nl("END OF DATA FILE OF DATALOGGER FOR WINDOWS")
 }
