@@ -24,7 +24,7 @@ mon.timezone <- "Etc/GMT-1" # Attention, here "-" is east of GMT!
 
 mon.line.sep <- "\r\n"     # MON files have DOS/Windows newlines
 
-mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Series settings", "Channel 1 from data header", "Channel 2 from data header") # sections to write into new MON headers, in order
+mon.write.sections <- c("Logger settings", "Channel 1", "Channel 2", "Channel 3", "Series settings", "Channel 1 from data header", "Channel 2 from data header", "Channel 3 from data header") # sections to write into new MON headers, in order
 
 
 ## Read a single MON file, return a list with header as text lines and
@@ -250,7 +250,7 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
 
   ## logger info part, equal-sign-separated; write out predefined sections
   ## ensure decimal separator is period in numbers
-  lapply(mon.write.sections,
+  lapply(intersect(mon.write.sections, names(header)), # only available sections
          FUN = function(sec) {
            nl(paste0("[", sec, "]"))
            df <- lst.to.df(header[[sec]])
