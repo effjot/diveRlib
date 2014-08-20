@@ -655,7 +655,8 @@ baro.comp <- function(w.raw, baro) {
   stopifnot(is.zoo(w.raw), is.zoo(baro))
   b <- na.approx(baro, xout = time(w.raw)) # interpol. missing baro data
   m <- merge(w.raw, b)
-  m$w.raw - m$b
+  in.water <- m[which(m$w > m$b + 0.1)]
+  in.water$w.raw - in.water$b
 }
 
 
