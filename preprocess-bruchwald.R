@@ -48,7 +48,7 @@ quarter <- as.difftime("0:15:00") # one quarter hour time difference
 
 
 
-### Korrektur Zeitversatz (irrtümlich Sommerzeit)
+### Korrektur Zeitversatz (irrtÂmlich Sommerzeit)
 
 if (do.fixfiles) {
   fix.file <- function(dir, basename) {
@@ -60,19 +60,19 @@ if (do.fixfiles) {
     write.mon.complete(filenames[2], x)
   }
 
-  cur.dir <- paste.path(base.dir, "Bruchwald ÜLN, Auslesung 2013-02-23")
+  cur.dir <- paste.path(base.dir, "Bruchwald ÂšLN, Auslesung 2013-02-23")
   fix.file(cur.dir, "gw-was-206_130225124849_75778.MON")
   fix.file(cur.dir, "lp-brw-5op_130225125129_75779.MON")
   fix.file(cur.dir, "gw-was-212_130225124909_J5284.MON")
   fix.file(cur.dir, "gw-was-213_130225125016_N0144.MON")
 
-  cur.dir <- paste.path(base.dir, "Bruchwald ÜLN, Auslesung 2013-03-25+26")
+  cur.dir <- paste.path(base.dir, "Bruchwald ÂšLN, Auslesung 2013-03-25+26")
   fix.file(cur.dir, "GW-WAS-206.MON")
   fix.file(cur.dir, "GW-WAS-212.MON")
   fix.file(cur.dir, "GW-WAS-213.MON")
   fix.file(cur.dir, "LP-BRW-5OP.MON")
 
-  cur.dir <- paste.path(base.dir, "Bruchwald ÜLN, Auslesung 2013-05-03")
+  cur.dir <- paste.path(base.dir, "Bruchwald ÂšLN, Auslesung 2013-05-03")
   fix.file(cur.dir, "GW-WAS-220^J5298^13-05-03 14-02-33.MON")
 }
 
@@ -83,7 +83,7 @@ if (do.fixfiles) {
 ## takes vector of date (i.e. subdir suffix) -- filename pairs
 
 build.filenames <- function(dat.name, dir = base.dir,
-                            subdir.basename = "Bruchwald ÜLN, Auslesung",
+                            subdir.basename = "Bruchwald ÂšLN, Auslesung",
                             ext = "MON") {
   paste.path(dir,
              paste(subdir.basename,
@@ -196,7 +196,7 @@ if (do.compensation) {
 if (do.abs.heads) {
 
   ## read records of geometry data
-  diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Logger Einbau+Umbau+Prüfung.csv", unit = "cm")
+  diver.geometry.complete <- read.diver.geometry("p:/2008_INKA-BB/Bruchwald am ÂšLN/Datenlogger/Logger Einbau+Umbau+PrÂfung.csv", unit = "cm")
 
   ## add locations' fullnames; shortnames go into loc
   diver.geometry.complete <- transform(
@@ -282,8 +282,8 @@ if (do.clean) {
 if (do.read.manual.meas) {
 
   ## read manual measurements
-  manual.gw.complete <- read.manual.meas("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Handmessungen alle GWMS.csv")
-  manual.surf.complete <- read.manual.meas("p:/2008_INKA-BB/Bruchwald am ÜLN/Datenlogger/Handmessungen alle OWMS.csv")
+  manual.gw.complete <- read.manual.meas("p:/2008_INKA-BB/Bruchwald am ÂšLN/Datenlogger/Handmessungen alle GWMS.csv")
+  manual.surf.complete <- read.manual.meas("p:/2008_INKA-BB/Bruchwald am ÂšLN/Datenlogger/Handmessungen alle OWMS.csv")
 
   ## add locations' fullnames; GW shortnames are in loc (but upper case)
   man.gw <- manual.gw.complete
