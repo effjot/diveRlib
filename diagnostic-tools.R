@@ -15,3 +15,8 @@ foo <- lapply(diver.data,
 
 w <- foo$was212
 w$t[which(duplicated(w$t))]
+
+
+
+## Shortcut for comparison plot
+comp <- Curry(plot.comparison, logger.zoo = h, manual.zoo = man)
