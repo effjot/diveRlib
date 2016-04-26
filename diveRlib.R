@@ -272,7 +272,10 @@ format.header <- function(header, created.by.diveRlib = FALSE) {
 }
 
 
-write.mon.complete <- function(filename, mon) {
+## Write out MON file from complete MON structure.  Uses the unparsed.hdr;
+## format it with format.header() and update.header() before if data has
+## changed.
+write.mon.complete <- function(filename, mon, h.digits = 1) {
   has.cond <- "cond" %in% colnames(mon$data)
 
   cols <-c("h", "temp", if (has.cond) "cond")
@@ -283,7 +286,7 @@ write.mon.complete <- function(filename, mon) {
   on.exit(options(op))
   df$t.fmt <- strftime(mon$data$t, format = mon.data.datetime.format,
                        tz = mon.timezone)
-  df$h.fmt <- formatC(mon$data$h, format="f", digits = 1,
+  df$h.fmt <- formatC(mon$data$h, format="f", digits = h.digits,
                       width = 12, drop0trailing = FALSE)
   df$temp.fmt <- formatC(mon$data$temp, format="f", digits = 2,
                          width = 11, drop0trailing = FALSE)
