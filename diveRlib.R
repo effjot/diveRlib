@@ -94,7 +94,12 @@ read.mons <- function(filenames, dec = ".") {
   lapply(filenames, FUN = read.mon, dec = dec)
 }
 
+## Read several MON files, return list of complete MON structures
+read.mons.complete <- function(filenames, dec = ".") {
+  lapply(filenames, FUN = read.mon.complete, dec = dec)
+}
 
+  
 ## Read all MON files starting with basename in alphabetical order and
 ## return as a single dataframe
 read.mon.all <- function(dir, basename) {
